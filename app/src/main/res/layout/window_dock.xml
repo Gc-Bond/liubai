@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 常驻 Dock 的窗口内容。**整个 Dock 系统只有这一份实例** —— 桌面上、别的 app 之上、
+     编辑态,看到的都是它(见 DockHost)。
+
+     为什么要包一层 FrameLayout:编辑态的候选面板要和 Dock 待在**同一个窗口**里。
+     早先编辑是在桌面 Activity 里另起一条 Dock 做的(localDock),因为当时的拖拽走系统
+     拖放、跨不了窗口;拖拽改成自绘之后(见 DockView.onInterceptTouchEvent)这条约束没了,
+     面板作为 Dock 的兄弟节点插在它下层即可,不用再有第二条 Dock。
+
+     窗口高度由 DockHost.params 决定,不看这里:常态 WRAP_CONTENT(只占屏幕下缘一条),
+     编辑态 MATCH_PARENT(面板要铺开)。DockView 靠 layout_gravity 一直贴着底。 -->
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/dock_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clipChildren="false"
+    android:clipToPadding="false">
+
+    <!-- 窗口是 match_parent 宽 + BOTTOM,整行都是 Dock,所以这里也要 match_parent ——
+         键之间的分布交给 SPACER 的 weight(见 DockView 的 SPACER 分支)。
+         贴死屏幕下缘的盲操考量不变,而且通栏之后左右两个角也成了固定锚点。 -->
+    <com.liubai.blank.ui.DockView
+        android:id="@+id/dock"
+        android:tag="fill:surface"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="4dp"
+        android:background="@drawable/dock_bg"
+        android:elevation="12dp" />
+</FrameLayout>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- game-2-line — MingCute Icon (Apache-2.0) https://github.com/mingcute-design/mingcute-icons
+     游戏中心的应用图标(同 ic_browser_app 那条,内部页面各有各的字形,否则抽屉里
+     三个条目都顶着留白的 logo)。选经典手柄轮廓而不是 game-1 那个胶囊:缩到 22dp
+     时胶囊只剩两个点,手柄的两个握把还认得出。单色,运行时靠 tint 上色。
+     **别手改这个文件**,要换图标就换上面那个来源名,重新转一次。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M15 9v3m-1.5-1.5h3M7 5c1 0 3 1 5 1s4-1 5-1c3 0 7 14 3 14c-3 0-4.5-4-8-4s-5 4-8 4C0 19 4 5 7 5Zm3 5.5a1.5 1.5 0 1 1-3 0a1.5 1.5 0 0 1 3 0Z" />
+</vector>

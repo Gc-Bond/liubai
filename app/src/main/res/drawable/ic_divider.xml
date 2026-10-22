@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 分隔线在候选面板里的字形:就是它在 Dock 上的样子 —— 一格宽里立一条竖线。
+     和 ic_minus 同一套线宽/端点,免得一排 chip 里就它显得粗细不一。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="#00000000" android:strokeColor="#ECEEEF"
+        android:strokeWidth="1.8" android:strokeLineCap="round"
+        android:pathData="M12,5 V19" />
+</vector>

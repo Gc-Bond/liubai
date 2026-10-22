@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 来源: default_quick_panels_window_vent_w_icon.svg (BYD 原厂, 见 tools/icon_map.json)。别手改，改映射表重跑 tools/svg2vd.py -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <group
+        android:translateX="-11.7164"
+        android:translateY="0.140691">
+        <group
+            android:scaleX="0.448198"
+            android:scaleY="0.448198">
+            <path
+                android:pathData="M57.02,28.97 L52.93,36.08 48.81,28.98Z"
+                android:fillColor="#FFFFFFFF"
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="2.0"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round" />
+            <path
+                android:pathData="m49.02,11.37 l19.92,0.01c1.28,0 2.31,1.33 2.31,2.99v24.19c0,1.65 -1.03,2.99 -2.31,2.99L36.89,41.55c-1.28,0 -2.31,-1.33 -2.31,-2.99l0,-13.04c-0.15,-7.96 6.95,-14.25 14.43,-14.15z"
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="3.0"
+                android:strokeLineCap="butt"
+                android:strokeLineJoin="miter" />
+            <path
+                android:pathData="M35.17,23.29L69.56,23.29"
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="3.0"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="miter" />
+        </group>
+    </group>
+</vector>

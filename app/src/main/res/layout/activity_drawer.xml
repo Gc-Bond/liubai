@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 底色走 surface(面板底色)不走 bg,和 activity_settings.xml 同一条理由:
+     应用中心跟设置页是一类东西 —— 从桌面上叫出来的一整页,不是桌面本身。
+     走 bg 的话它跟的是"桌面底色",而桌面底色平时被壁纸盖着、根本看不见,
+     结果就是这一页黑得跟谁都不像(2026-08-16 修)。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/surface"
+    android:tag="bg:surface;panel"
+    android:paddingHorizontal="28dp"
+    android:paddingTop="24dp"
+    android:paddingBottom="12dp">
+
+    <!-- 顶栏占位。同底部那条 dock_space:顶栏是系统悬浮窗、不占布局空间,
+         不留就会把「返回」这排压住。高度由 StatusBarHost.applyTopSpace 运行时改写。 -->
+    <View
+        android:id="@+id/status_bar_space"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/status_bar_space" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView android:id="@+id/filter_all"
+            android:tag="fg:muted;stroke:line"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="14dp"
+            android:paddingVertical="8dp"
+            android:background="@drawable/pill_line"
+            android:text="全部应用"
+            android:textColor="@color/muted"
+            android:textSize="14sp"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <TextView android:id="@+id/filter_system"
+            android:tag="fg:muted;stroke:line"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:paddingHorizontal="14dp"
+            android:paddingVertical="8dp"
+            android:background="@drawable/pill_line"
+            android:text="本机应用"
+            android:textColor="@color/muted"
+            android:textSize="14sp"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <TextView android:id="@+id/filter_user"
+            android:tag="fg:muted;stroke:line"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:paddingHorizontal="14dp"
+            android:paddingVertical="8dp"
+            android:background="@drawable/pill_line"
+            android:text="下载应用"
+            android:textColor="@color/muted"
+            android:textSize="14sp"
+            android:clickable="true"
+            android:focusable="true" />
+    </LinearLayout>
+
+    <GridView android:id="@+id/app_grid"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="18dp"
+        android:verticalSpacing="18dp"
+        android:horizontalSpacing="6dp"
+        android:scrollbars="none"
+        android:clipToPadding="false"
+        android:paddingBottom="@dimen/dock_space" />
+</LinearLayout>

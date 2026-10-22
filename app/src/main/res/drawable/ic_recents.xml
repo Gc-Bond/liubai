@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 来源: nav_common_recent_task_w_icon.svg (BYD 原厂, 见 tools/icon_map.json)。别手改，改映射表重跑 tools/svg2vd.py -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <group
+        android:translateX="0.608168"
+        android:translateY="0.608168">
+        <group
+            android:scaleX="0.215347"
+            android:scaleY="0.215347">
+            <path
+                android:pathData="m90.34,22.35c0,-5.57 -5.04,-4.94 -5.04,-4.94H21.38c-6.01,0 -5.75,5.63 -5.75,5.63l-0.07,11.49 -0.07,48.25c0,0 -0.26,5.63 5.75,5.63h63.93c0,0 5.03,0.63 5.04,-4.94l0.07,-48.05z"
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="6.0"
+                android:strokeLineCap="butt"
+                android:strokeLineJoin="miter" />
+        </group>
+    </group>
+</vector>

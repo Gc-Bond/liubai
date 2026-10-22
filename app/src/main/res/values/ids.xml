@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Motion 往 view 上挂弹簧实例用的 tag key(SpringAnimation 要复用才能中途重定向) -->
+    <item name="motion_sx" type="id" />
+    <item name="motion_sy" type="id" />
+    <item name="motion_ty" type="id" />
+    <item name="motion_tx" type="id" />
+    <!-- 横向弹簧上挂着的落定回调。弹簧是复用的,挂新回调前要把旧的摘掉(见 Motion.slideX) -->
+    <item name="motion_tx_end" type="id" />
+</resources>

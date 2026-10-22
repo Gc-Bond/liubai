@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>锦鲤池车速联动调参</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    font-family: -apple-system, "PingFang SC", sans-serif;
+    max-width: 640px;
+    margin: 40px auto;
+    padding: 0 20px 60px;
+    line-height: 1.6;
+  }
+  h1 { font-size: 18px; }
+  h2 { font-size: 15px; margin: 0 0 4px; }
+  .hint { color: #888; font-size: 13px; }
+  section {
+    margin: 28px 0;
+    padding: 16px 18px;
+    border-radius: 10px;
+    background: rgba(127,127,127,0.06);
+  }
+  .row { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+  .row label { width: 110px; flex-shrink: 0; }
+  .row input[type=number] { flex: 1; padding: 6px 8px; font-size: 14px; }
+  .row input[type=range] { flex: 1; }
+  .row output { width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
+  #formula, #formulaFish {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 12px;
+    background: rgba(127,127,127,0.12);
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin: 10px 0;
+  }
+  .preview {
+    font-size: 26px;
+    font-weight: 700;
+    text-align: center;
+    padding: 14px;
+    border-radius: 8px;
+    background: rgba(127,127,127,0.08);
+    margin: 10px 0;
+  }
+  .preview span { font-size: 13px; font-weight: 400; color: #888; }
+  button {
+    padding: 9px 18px;
+    font-size: 14px;
+    border-radius: 8px;
+    border: none;
+    background: #2b7de9;
+    color: white;
+    cursor: pointer;
+  }
+  button.toggle-on { background: #1a9850; }
+  button:disabled { background: #999; cursor: not-allowed; }
+  .status { margin-top: 10px; font-size: 13px; min-height: 18px; }
+  .ok { color: #1a9850; }
+  .err { color: #d7302f; }
+  code { background: rgba(127,127,127,0.15); padding: 1px 5px; border-radius: 4px; }
+  #liveState {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+  }
+</style>
+</head>
+<body>
+
+<h1>锦鲤池车速联动调参</h1>
+<p class="hint">
+  改参数、点推送,立刻在车机壁纸上生效——不用改 Java 代码,不用重新编译部署。前提:
+  <code>tools/wallpaper-speed-tuner-server.mjs</code> 这个本地小服务器开着,车机上留白
+  正铺着锦鲤池壁纸。
+</p>
+
+<section>
+  <h2>车速 → 鱼游速度(fishSpeed)</h2>
+  <div class="row">
+    <label for="speed">车速 (km/h)</label>
+    <input type="range" id="speed" min="0" max="150" value="40" step="1">
+    <output id="speedOut">40</output>
+  </div>
+  <div class="row">
+    <label for="sBase">静止时 base</label>
+    <input type="number" id="sBase" value="1" step="0.1" min="0" max="5">
+  </div>
+  <div class="row">
+    <label for="sDivisor">除数 divisor</label>
+    <input type="number" id="sDivisor" value="30" step="1" min="1">
+  </div>
+  <div class="row">
+    <label for="sMax">上限 max</label>
+    <input type="number" id="sMax" value="10" step="0.5" min="0.5" max="20">
+  </div>
+  <div id="formula"></div>
+  <div class="preview" id="speedPreview">-- <span>fishSpeed</span></div>
+  <button id="pushSpeedBtn">推送 fishSpeed</button>
+  <div class="status" id="speedStatus"></div>
+</section>
+
+<section>
+  <h2>电量 → 鱼数(fishCount)</h2>
+  <div class="row">
+    <label for="battery">电量 (%)</label>
+    <input type="range" id="battery" min="0" max="100" value="70" step="1">
+    <output id="batteryOut">70</output>
+  </div>
+  <div class="row">
+    <label for="fMin">最少 min</label>
+    <input type="number" id="fMin" value="5" step="1" min="0" max="50">
+  </div>
+  <div class="row">
+    <label for="fMax">最多 max</label>
+    <input type="number" id="fMax" value="20" step="1" min="1" max="50">
+  </div>
+  <div id="formulaFish"></div>
+  <div class="preview" id="fishPreview">-- <span>fishCount</span></div>
+  <button id="pushFishBtn">推送 fishCount</button>
+  <div class="status" id="fishStatus"></div>
+</section>
+
+<section>
+  <h2>充电 → 自动撒食(charging)</h2>
+  <p class="hint">开着的时候壁纸每 4 秒自动投一次食,鱼会游过去吃。</p>
+  <button id="chargingBtn">充电:关</button>
+  <div class="status" id="chargingStatus"></div>
+</section>
+
+<section>
+  <h2>当前壁纸实际状态</h2>
+  <button id="readBtn">读取</button>
+  <div id="liveState" class="hint">(还没读)</div>
+</section>
+
+<script>
+const $ = id => document.getElementById(id);
+
+async function push(prop, value) {
+  const res = await fetch(`/push?prop=${prop}&value=${value}`);
+  return res.json();
+}
+
+// ---- 车速 → fishSpeed ----
+const speed = $('speed'), speedOut = $('speedOut');
+const sBase = $('sBase'), sDivisor = $('sDivisor'), sMax = $('sMax');
+const formula = $('formula'), speedPreview = $('speedPreview');
+
+function computeFishSpeed() {
+  const v = parseFloat(speed.value);
+  const b = parseFloat(sBase.value) || 0;
+  const d = parseFloat(sDivisor.value) || 1;
+  const m = parseFloat(sMax.value) || 3;
+  let fs = b + v / d;
+  return Math.round(Math.max(b, Math.min(m, fs)) * 1000) / 1000;
+}
+function renderSpeed() {
+  speedOut.textContent = speed.value;
+  const fs = computeFishSpeed();
+  formula.textContent =
+    `fishSpeed = clamp(${sBase.value} + ${speed.value}/${sDivisor.value}, ${sBase.value}, ${sMax.value}) = ${fs}`;
+  speedPreview.innerHTML = `${fs} <span>fishSpeed</span>`;
+  return fs;
+}
+[speed, sBase, sDivisor, sMax].forEach(el => el.addEventListener('input', renderSpeed));
+renderSpeed();
+
+$('pushSpeedBtn').addEventListener('click', async () => {
+  const fs = renderSpeed();
+  const st = $('speedStatus');
+  st.textContent = '推送中…'; st.className = 'status hint';
+  try {
+    const data = await push('fishSpeed', fs);
+    st.textContent = data.ok ? `已推送 fishSpeed=${fs}` : '失败: ' + data.error;
+    st.className = 'status ' + (data.ok ? 'ok' : 'err');
+  } catch (e) {
+    st.textContent = '连不上本地服务: ' + e.message;
+    st.className = 'status err';
+  }
+});
+
+// ---- 电量 → fishCount ----
+const battery = $('battery'), batteryOut = $('batteryOut');
+const fMin = $('fMin'), fMax = $('fMax');
+const formulaFish = $('formulaFish'), fishPreview = $('fishPreview');
+
+function computeFishCount() {
+  const p = parseInt(battery.value, 10);
+  const mn = parseInt(fMin.value, 10) || 0;
+  const mx = parseInt(fMax.value, 10) || 20;
+  return Math.max(mn, Math.min(mx, mn + Math.round(p * (mx - mn) / 100)));
+}
+function renderFish() {
+  batteryOut.textContent = battery.value;
+  const fc = computeFishCount();
+  formulaFish.textContent =
+    `fishCount = clamp(${fMin.value} + ${battery.value}%×(${fMax.value}-${fMin.value})/100, ${fMin.value}, ${fMax.value}) = ${fc}`;
+  fishPreview.innerHTML = `${fc} <span>fishCount</span>`;
+  return fc;
+}
+[battery, fMin, fMax].forEach(el => el.addEventListener('input', renderFish));
+renderFish();
+
+$('pushFishBtn').addEventListener('click', async () => {
+  const fc = renderFish();
+  const st = $('fishStatus');
+  st.textContent = '推送中…'; st.className = 'status hint';
+  try {
+    const data = await push('fishCount', fc);
+    st.textContent = data.ok ? `已推送 fishCount=${fc}` : '失败: ' + data.error;
+    st.className = 'status ' + (data.ok ? 'ok' : 'err');
+  } catch (e) {
+    st.textContent = '连不上本地服务: ' + e.message;
+    st.className = 'status err';
+  }
+});
+
+// ---- 充电 → charging ----
+let charging = false;
+const chargingBtn = $('chargingBtn');
+chargingBtn.addEventListener('click', async () => {
+  const st = $('chargingStatus');
+  const next = charging ? 0 : 1;
+  st.textContent = '推送中…'; st.className = 'status hint';
+  try {
+    const data = await push('charging', next);
+    if (data.ok) {
+      charging = !!next;
+      chargingBtn.textContent = '充电:' + (charging ? '开' : '关');
+      chargingBtn.className = charging ? 'toggle-on' : '';
+      st.textContent = '已推送';
+      st.className = 'status ok';
+    } else {
+      st.textContent = '失败: ' + data.error;
+      st.className = 'status err';
+    }
+  } catch (e) {
+    st.textContent = '连不上本地服务: ' + e.message;
+    st.className = 'status err';
+  }
+});
+
+// ---- 读取当前状态 ----
+$('readBtn').addEventListener('click', async () => {
+  const el = $('liveState');
+  el.textContent = '读取中…';
+  try {
+    const res = await fetch('/read');
+    const data = await res.json();
+    el.textContent = data.ok ? JSON.stringify(data.state, null, 2) : '失败: ' + data.error;
+  } catch (e) {
+    el.textContent = '连不上本地服务: ' + e.message;
+  }
+});
+</script>
+
+</body>
+</html>

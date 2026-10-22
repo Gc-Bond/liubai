@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        XML 里 @color/xxx 的取值 —— 它们是**初始值 / 兜底**,运行时由 ModeApplier 按
+        android:tag 覆盖成当前模式的色(见 ModeApplier 的类注释)。所以这里的值只在
+        两个时刻露面:模式化那一帧之前,以及没挂 tag 的地方。
+
+        既然如此就该和默认配色保持一致,否则会闪一下旧色。默认配色是浅色
+        (assets/modes/normal.json,见 ModeManager.DEFAULT_PALETTE)。
+        **改默认配色时这份要跟着改。**
+
+        八位色值(#AARRGGBB)是有意的:鸿蒙那套配色的前景是"同一个基色改 alpha"的四档,
+        浅色档的基色是 #182431,见 normal.json 的 _colors_note。
+    -->
+    <color name="bg">#F1F3F5</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="tile">#F1F3F5</color>
+    <color name="tile2">#E5E8EB</color>
+    <color name="line">#33182431</color>
+    <color name="ink">#FF182431</color>
+    <color name="muted">#99182431</color>
+    <color name="faint">#66182431</color>
+    <color name="glyph">#99182431</color>
+    <color name="accent">#006CDE</color>
+    <color name="accent_soft">#BCD5F0</color>
+    <color name="on_accent">#FFFFFF</color>
+</resources>

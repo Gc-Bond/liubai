@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 书签格子的圆底,颜色在运行时按标题哈希取色(见 BrowserActivity.tileColor),
+     这里的 @color/tile 只是 inflate 那一刻的占位值。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+    <solid android:color="@color/tile" />
+</shape>

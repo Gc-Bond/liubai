@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 前台监听的无障碍配置。**只订阅窗口状态变化**,不要 canRetrieveWindowContent ——
+     我们只需要知道"前台是谁",不需要看别人窗口里的内容,能不要的权限一律不要。
+     (对比 DiStyle 的配置:typeAllMask + canRetrieveWindowContent + 按键过滤,
+      那是因为它还要靠无障碍做手势和按键劫持,留白不做那些。)
+
+     notificationTimeout **必须是 0**:它是同类事件的节流窗口,填 100 就等于给每次
+     前台切换白加 100ms。这条链路上挂着倒车让位 —— 影像已经在画了、Dock 还压在
+     上面,那 100ms 是看得见的。我们只订阅 typeWindowStateChanged 一种事件,
+     本来就不存在"事件太密要节流"的问题。 -->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/fg_watch_desc"
+    android:accessibilityEventTypes="typeWindowStateChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:notificationTimeout="0"
+    android:canRetrieveWindowContent="false" />

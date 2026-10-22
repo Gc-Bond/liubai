@@ -1,0 +1,33 @@
+{
+  "id": "full",
+  "name": "深色",
+  "_doc": "配色/几何/能力。字段解析见 mode/Mode.java、mode/Capabilities.java、mode/Dim.java。开源版只有这一个模式,能力全开。",
+  "wallpaper": "黑夜猫.mp4",
+  "capabilities": {
+    "hvac": "rich",
+    "pipSlots": 2,
+    "particles": true,
+    "onlineWallpaper": true,
+    "gameCenter": true
+  },
+  "dims": {
+    "radius_card": 8,
+    "radius_tile": 6,
+    "radius_key": 6,
+    "radius_chip": 4
+  },
+  "colors": {
+    "bg": "#000000",
+    "surface": "#0E0E10",
+    "tile": "#050506",
+    "tile2": "#1C1C1F",
+    "line": "#33FFFFFF",
+    "ink": "#DBFFFFFF",
+    "muted": "#99FFFFFF",
+    "faint": "#66FFFFFF",
+    "accent": "#006CDE",
+    "accent_soft": "#001831",
+    "on_accent": "#FFFFFF",
+    "glyph": "#99FFFFFF"
+  }
+}

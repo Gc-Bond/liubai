@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 空格在候选面板里的字形:一个虚线方框,就是它在编辑态 Dock 上的样子(见 DockView.SlotHint)。
+     虚线段长和那边一致(4dp 一段),两处看着才是同一个东西。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="#00000000" android:strokeColor="#ECEEEF"
+        android:strokeWidth="1.8" android:strokeLineCap="round"
+        android:pathData="M5,8 V6.5 A1.5,1.5 0 0,1 6.5,5 H8
+                          M11,5 H13   M16,5 H17.5 A1.5,1.5 0 0,1 19,6.5 V8
+                          M19,11 V13  M19,16 V17.5 A1.5,1.5 0 0,1 17.5,19 H16
+                          M13,19 H11  M8,19 H6.5 A1.5,1.5 0 0,1 5,17.5 V16
+                          M5,13 V11" />
+</vector>

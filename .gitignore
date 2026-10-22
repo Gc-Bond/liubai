@@ -1,0 +1,47 @@
+# Android / Gradle
+.gradle/
+build/
+/app/build/
+# CMake/NDK 的构建缓存(游戏中心的 JNI 桥)。里面全是本机绝对路径,进了 git
+# 换台机器就冲突,而且 gradle 自己会重建。
+.cxx/
+local.properties
+*.apk
+*.ap_
+*.aab
+
+# 构建产物 / 中间件
+*.dex
+*.class
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# 密钥(切勿提交)
+*.jks
+*.keystore
+keystore.properties
+
+# 第三方 APK 解包的参照素材:体积大、含第三方内容,不进仓库
+/迪粉桌面 apk/
+/迪友桌面 apk/
+/布丁 ui apk/
+/distyle apk/
+/qqcar_jadx/
+bugreport-*.zip
+
+# 车机现场快照:含 VIN/手机号/蓝牙 MAC 等隐私数据 + 1.6G 系统 APK,严禁提交
+/carsnapshot/
+
+# 壁纸原始素材(转码前的大文件)。转码产物在 assets/wallpapers/ 里,那个要提交
+/wallpaper-src/
+__pycache__/
+
+# 可行性验证用的独立小工程,不留。
+/poc/
+.playwright-mcp/
+
+# car-boot-log.sh 抓的车机日志,一次开机就几十兆
+/logs/

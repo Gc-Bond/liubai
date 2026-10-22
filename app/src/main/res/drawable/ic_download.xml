@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- download-2-line 同族。**不是 MingCute 转出来的**:那套里没有现成的下载图标,
+     这个是按同一规格(24 viewport / stroke 2 / round cap 与 join)手画的 ——
+     箭头下探 + 一只托盘,和 ic_refresh、ic_star 摆在一排看粗细一致。
+     以后 MingCute 补了 download-2-line,重转一次替掉即可。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M12 3v11m0 0-4.2-4.2M12 14l4.2-4.2M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />
+</vector>

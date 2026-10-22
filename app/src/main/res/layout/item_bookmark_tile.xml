@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 根节点不能声明 clickable/focusable——GridView 靠这一点才会把点击交给
+     setOnItemClickListener;格子自己先接了 click,点击事件就不会再往上冒。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:paddingVertical="10dp">
+
+    <TextView android:id="@+id/tile_glyph"
+        android:tag="fg:ink;fill:tile"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:background="@drawable/circle_plain"
+        android:gravity="center"
+        android:textColor="@color/ink"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <TextView android:id="@+id/tile_label"
+        android:tag="fg:ink"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:gravity="center"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:textColor="@color/ink"
+        android:textSize="12sp" />
+</LinearLayout>

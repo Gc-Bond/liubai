@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dock 整条的承载面:通栏贴底,左右到边。
+     API 29 没有实时背景模糊,玻璃感用"高不透明度的 surface + 上边一道线 + 投影"近似 ——
+     按键不再各垫底板(见 DockView 幽灵键),整条 Dock 才是那块"面"。
+
+     不留圆角:通栏之后左右两端就是屏幕边缘,圆角会在两个下角豁开两个小口子
+     (居中胶囊时代那 26dp 上圆角是为了让悬浮的坞看起来是浮起来的,通栏没这回事)。
+
+     **这里没有 stroke**:shape 的描边四边一起画,而 Dock 只有上边那条有意义 ——
+     下/左/右三条压在屏幕边缘上,看出来就是"Dock 没和屏幕边框贴合"(2026-08-18 平板实测)。
+     上边那条改由 DockView 自绘,见那边的 dispatchDraw。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/surface" />
+</shape>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 来源: _derived_hotspot.svg (BYD 原厂, 见 tools/icon_map.json)。别手改，改映射表重跑 tools/svg2vd.py -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <group
+        android:translateX="-1.66728"
+        android:translateY="-1.66712">
+        <group
+            android:scaleX="0.00320328"
+            android:scaleY="0.00320328">
+            <path
+                android:pathData="M3783.7,4266.6a482.9,482.9 0 1 0 965.8,0a482.9,482.9 0 1 0 -965.8,0Z"
+                android:fillColor="#FFFFFFFF" />
+            <path
+                android:pathData="M5224.2,3463.2A1250.0,1250.0 0 0 0 3309.1,3463.2A360.9,360.9 0 0 1 2756.2,2999.2A1971.8,1971.8 0 0 1 5777.1,2999.2A360.9,360.9 0 0 1 5224.2,3463.2Z"
+                android:fillColor="#FFFFFFFF" />
+            <path
+                android:pathData="M3309.1,5070.1A1250.0,1250.0 0 0 0 5224.2,5070.1A360.9,360.9 0 0 1 5777.1,5534.1A1971.8,1971.8 0 0 1 2756.2,5534.1A360.9,360.9 0 0 1 3309.1,5070.1Z"
+                android:fillColor="#FFFFFFFF" />
+            <path
+                android:pathData="M6105.2,2724.0A2400.0,2400.0 0 0 0 2428.1,2724.0A360.9,360.9 0 0 1 1875.2,2260.0A3121.8,3121.8 0 0 1 6658.1,2260.0A360.9,360.9 0 0 1 6105.2,2724.0Z"
+                android:fillColor="#FFFFFFFF" />
+            <path
+                android:pathData="M2428.1,5809.3A2400.0,2400.0 0 0 0 6105.2,5809.3A360.9,360.9 0 0 1 6658.1,6273.3A3121.8,3121.8 0 0 1 1875.2,6273.3A360.9,360.9 0 0 1 2428.1,5809.3Z"
+                android:fillColor="#FFFFFFFF" />
+        </group>
+    </group>
+</vector>

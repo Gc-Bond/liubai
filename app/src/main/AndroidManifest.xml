@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 长按 app 触发系统卸载(ACTION_DELETE)必须声明,否则请求被静默拒绝、毫无反馈。
+         normal 级权限,安装即授予,无需运行时申请。 -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+
+    <!-- 浏览器下完 apk 后点「安装」要它(在线更新走的就是这条路,见 BrowserActivity
+         .installDownloaded)。同样是 normal 级、安装即授予 —— 但**它不等于能装**:
+         Android 8 起还要用户在系统里给本应用开「允许安装未知应用」那个开关,
+         没开就只能先把那个设置页推给人(canRequestPackageInstalls 判的是那个)。 -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <!-- 内置提权要连本机 adb(127.0.0.1:5555)。连的是自己也算建 socket,
+         没这条权限直接 EPERM——错误信息是「Operation not permitted」,
+         看起来像被系统安全策略挡了,其实只是权限没声明。 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- 常驻 Dock:它是个系统悬浮窗,不属于任何 Activity,离开桌面也还在(见 DockHost)。
+         这是「特殊权限」,声明了也不会自动给,得走 appops 授(见 Overlay)——
+         用 pm grant 授它是无效的,而且不报错,看着像成功了其实没有。 -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- 车况读取(续航 / 保养里程,见 CarStatus)。**normal 级**(AutoPermission.apk 里
+         protectionLevel=0x00)—— 声明即得,不需要签名、不需要提权、不弹授权框。
+         注意 `adb shell content query` 读这个 provider 会被拒,那不是提权不够,
+         是 content 命令自己没声明这条权限,别被那个现象误导。
+         胎压不走这条,它在 native bus 上(见 CarStatus 类注释)。 -->
+    <uses-permission android:name="com.byd.permission.carstatus.READ_PROVIDER" />
+
+    <!-- 顶栏那两颗状态图标(见 StatusBarView)。两条都是 normal 级,声明即得、不弹框。
+         只问"开着没/连着没",不扫描、不连设备、不读 SSID —— 那些要的是危险级权限,
+         这里一条都用不上(BLUETOOTH 只够 isEnabled,BLUETOOTH_ADMIN 才能开关)。 -->
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <!-- 蓝牙那张车控小卡的开关(见 NetSwitch.setBluetooth)。BLUETOOTH_ADMIN 是 normal 级,
+         装上就有 —— 蓝牙这一项**不用提权**,BluetoothAdapter.enable()/disable() 到
+         Android 12 都还是普通 app 能调的,不像 setWifiEnabled 从 10 起就被禁了。 -->
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- WLAN / 热点那两张车控小卡(见 NetSwitch)。
+         ACCESS_WIFI_STATE 是 normal 级,只用来读 getWifiState —— **开关不靠它**:
+         setWifiEnabled 从 Android 10 起对第三方 app 一律返回 false,写只能走提权
+         svc wifi,所以 CHANGE_WIFI_STATE 声明了也没用,不声明。
+         WRITE_SETTINGS 是**特殊权限**,声明了也不会自动给(同 SYSTEM_ALERT_WINDOW),
+         热点第一次点的时候用提权 appops 现授;它是 startTethering 那条路唯一的门槛
+         (这台车 config_mobile_hotspot_provision_app 为空,不走 TETHER_PRIVILEGED 那支)。 -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+
+    <!-- 「我的」壁纸:用户往「内部存储/留白壁纸/」里放图片和视频,我们只读不写。
+         危险级权限,运行时申请的入口在外观面板那句提示上(见 AppearancePopup.personalHint) ——
+         点它才发起,不在启动时弹,免得开机第一眼就是个要权限的框。
+         **在线壁纸不需要这个权限**:它落在 getExternalFilesDir 私有目录里。 -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
+    <!-- requestLegacyExternalStorage:个人壁纸目录在内部存储根下(留白壁纸/),
+         读它必须退回旧的存储视图。
+         常见的误解是"targetSdk 29 默认就是 legacy" —— 反了:targetSdk ≤ 28 才默认 legacy,
+         **29 在 Android 10 上默认启用分区存储**,那时 listFiles() 直接返回 null
+         (不是空数组、也不报错),个人壁纸一张都列不出来,看起来就像目录是空的。实测踩过。
+         另一条路是 MANAGE_EXTERNAL_STORAGE,但那是 API 30+ 的特殊权限,还要把用户支到
+         系统设置页手动开,对"放几张壁纸"这个需求太重了。
+         车机是 Android 10;Android 11+ 上 targetSdk<30 的 app 也仍然保留 legacy。 -->
+
+    <!-- 这里曾经有个 extractNativeLibs="true",是为**打进包的** libretro 核心留的:
+         那些核心要运行时 dlopen,而 dlopen 认的是真实路径,不解压就只有一条
+         "library ... not found"(System.loadLibrary 走的是另一套、照常能加载,
+         所以当时只有 dlopen 这条挂,很难联想到打包方式)。
+         核心现在一个都不打包、全从 buildbot 下载到 filesDir(见 GameActivity.corePath),
+         那条理由随之消失 —— 包里只剩自己编的 retrobridge,走 System.loadLibrary。 -->
+    <application
+        android:name=".BlankApp"
+        android:allowBackup="false"
+        android:requestLegacyExternalStorage="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="false"
+        android:theme="@style/BlankTheme">
+
+        <!--
+          android:enabled="false" 是**故意的,别删**:车机的 PackageInstaller 拒装
+          「桌面类应用」(弹「不支持安装桌面类应用」),判据就是 apk 里有没有
+          category.HOME 且 enabled 且 exported 的 activity —— 读的是这里的静态值。
+          声明成关的躲过那道检查,装完由 app 自己打开(EntryActivity /
+          MY_PACKAGE_REPLACED / BlankApp 三处,见 DefaultHome.enableHomeEntry)。
+          迪粉和 DiStyle 都是这么干的。
+          LAUNCHER 已挪到 EntryActivity:留在这儿的话,HOME 一启用抽屉里就是两个「留白」。
+        -->
+        <activity
+            android:name=".HomeActivity"
+            android:enabled="false"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:stateNotNeeded="true"
+            android:configChanges="orientation|keyboardHidden|screenSize|uiMode|navigation">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <!-- DiLink 的 HOME 键派发的 intent 带 HOME_ONLY;缺了它就不会被系统当作桌面候选(实测 launcher3 与布丁 UI 均声明) -->
+                <category android:name="android.intent.category.HOME_ONLY" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.MONKEY" />
+            </intent-filter>
+        </activity>
+
+        <!-- 抽屉里那个图标:常亮的入口,负责把上面那个打开。没有界面,点完就跳走。 -->
+        <activity
+            android:name=".EntryActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 覆盖安装会把组件状态重置回 manifest,不补这一下升级完桌面就没了 -->
+        <receiver
+            android:name=".util.PackageReplacedReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- 内置特权服务的 binder 收件口。
+             必须 exported:递 binder 的是 shell(uid 2000) 进程,不 exported 它调不进来。
+             安全靠调用方 uid 校验,见 PrivilegedProvider —— 别的 app 塞进来的一律丢弃。 -->
+        <provider
+            android:name=".privileged.PrivilegedProvider"
+            android:authorities="${applicationId}.privileged"
+            android:enabled="true"
+            android:exported="true"
+            android:multiprocess="false" />
+
+        <!-- Shizuku 提权:必须注册这个 provider,binder 才能连上服务 -->
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:multiprocess="false"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
+
+        <!-- 前台监听:只订阅窗口状态变化,拿当前前台包名给 Dock 判断显不显示。
+             普通 app 读不到别人的前台信息(getRunningTasks 自 Android 5 起只返回自己的),
+             提权 shell 跑 am stack list 能拿到但只能轮询,做不了实时黑名单。
+             配置里刻意关掉了 canRetrieveWindowContent —— 不需要看别人窗口内容。 -->
+        <service
+            android:name=".privileged.ForegroundWatch"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/foreground_watch" />
+        </service>
+
+        <!-- 空壳通知监听:只为拿"通知使用权",MediaSessionManager 读别家播放会话必须要它 -->
+        <service
+            android:name=".media.BlankNotificationListener"
+            android:exported="false"
+            android:label="留白"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <!-- 提权/画中画能力探测页(PrivilegeProbeActivity)只在 debug 清单里声明:
+             它是开发期工具、exported 给 adb 拉起,还接受 activate 参数,不该跟着发出去。 -->
+
+        <!-- 极简浏览器:独立的可启动条目,不挂在桌面三层结构或 Dock 里,
+             只能从留白自己的「全部应用」抽屉进。
+
+             **刻意不声明 LAUNCHER**:声明了的话原厂 DiLink 桌面也会跟着长出一个图标
+             (LAUNCHER 是全局的,给谁看不由我们挑),而留白止于原厂桌面 —— 切回去之后
+             不该在人家那儿留下痕迹。代价是抽屉也查不到它了(那边靠 queryIntentActivities
+             列表),所以由 AppDrawerActivity.loadApps 显式注入。游戏中心同理。
+
+             没有 filter 不影响启动:抽屉选中后走的是 Launchers.launch 的
+             setClassName 显式 Intent,显式 Intent 根本不做 filter 匹配。 -->
+        <activity
+            android:name=".BrowserActivity"
+            android:exported="true"
+            android:icon="@drawable/ic_browser_app"
+            android:label="@string/browser_app_name"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|keyboardHidden|screenSize|uiMode|navigation"
+            android:theme="@style/BlankTheme" />
+
+        <!-- 游戏中心:车机屏当显示器、手机浏览器当手柄。同上,不声明 LAUNCHER。 -->
+        <activity
+            android:name=".game.GameActivity"
+            android:exported="true"
+            android:icon="@drawable/ic_game_app"
+            android:label="@string/game_app_name"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|keyboardHidden|screenSize|uiMode|navigation"
+            android:theme="@style/BlankTheme" />
+
+        <activity
+            android:name=".AppDrawerActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:configChanges="orientation|keyboardHidden|screenSize|uiMode|navigation"
+            android:theme="@style/BlankTheme.Translucent" />
+
+    </application>
+
+</manifest>

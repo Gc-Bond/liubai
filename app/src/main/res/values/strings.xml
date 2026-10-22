@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">留白</string>
+    <string name="browser_app_name">浏览器</string>
+    <string name="game_app_name">游戏</string>
+    <!-- 无障碍设置页里显示给用户看的说明。要写清楚"拿它干什么",
+         这是用户决定要不要开的唯一依据 -->
+    <string name="fg_watch_desc">让底部 Dock 知道当前在用哪个应用，以便回到原厂桌面时自动让位。只读取前台应用的包名，不读取屏幕内容。</string>
+
+    <!-- 顶栏状态图标的无障碍描述。顶栏不接触摸、图标也没有文字标签，
+         读屏用户只能靠这两条知道它们是什么 -->
+    <string name="status_bluetooth">蓝牙已开启</string>
+    <string name="status_wifi">已连接 Wi-Fi</string>
+</resources>

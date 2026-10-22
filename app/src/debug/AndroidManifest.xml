@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  debug 专用清单。这里声明的东西**只进 debug 包**，release 走 main 那份、
+  连类文件都不会被编进去(debug sourceSet 隔离,比 BuildConfig.DEBUG 判断彻底)。
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!-- 提权/画中画能力探测页(开发期工具,exported 便于 adb 直接拉起,car-avd.sh 靠它点
+             Shizuku 授权)。类在 main 里,声明只在这儿:release 没有这个页,R8 会把类一起裁掉。 -->
+        <activity
+            android:name="com.liubai.blank.PrivilegeProbeActivity"
+            android:exported="true"
+            android:configChanges="orientation|keyboardHidden|screenSize|uiMode|navigation"
+            android:theme="@style/BlankTheme" />
+    </application>
+
+</manifest>

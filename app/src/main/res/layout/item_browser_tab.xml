@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="36dp"
+    android:layout_marginEnd="8dp"
+    android:tag="fill:tile;radius:radius_tile"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="@drawable/tile_bg"
+    android:paddingStart="14dp"
+    android:paddingEnd="8dp"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- 标题宽度**写死**,不跟着内容伸缩:标签一长一短排在底栏上像一排歪牙,
+         而且每开一个标签、每换一次网页标题,整条标签区都要重新挤一次位置
+         (2026-09-12 用户:"不要拉长标签页") -->
+    <TextView android:id="@+id/tab_title"
+        android:tag="fg:ink"
+        android:layout_width="96dp"
+        android:layout_height="wrap_content"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:textColor="@color/ink"
+        android:textSize="14sp"
+        android:text="新标签页" />
+
+    <ImageView android:id="@+id/tab_close"
+        android:tag="tint:muted"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_marginStart="4dp"
+        android:padding="8dp"
+        android:src="@drawable/ic_remove"
+        android:clickable="true"
+        android:focusable="true"
+        android:contentDescription="关闭标签页" />
+</LinearLayout>

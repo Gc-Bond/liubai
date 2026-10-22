@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 来源: nav_common_menu_w_icon.svg (BYD 原厂, 见 tools/icon_map.json)。别手改，改映射表重跑 tools/svg2vd.py -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <group
+        android:translateX="1.08795"
+        android:translateY="0.952029">
+        <group
+            android:scaleX="0.202864"
+            android:scaleY="0.202864">
+            <path
+                android:pathData="M20.53,18.74L42.49,18.74A5.64,5.64 0,0 1,48.13 24.38L48.13,43.46A5.64,5.64 0,0 1,42.49 49.1L20.53,49.1A5.64,5.64 0,0 1,14.89 43.46L14.89,24.38A5.64,5.64 0,0 1,20.53 18.74z"
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="6.0"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round" />
+            <path
+                android:pathData="M65.09,18.74L87.04,18.74A5.64,5.64 0,0 1,92.69 24.38L92.69,43.46A5.64,5.64 0,0 1,87.04 49.1L65.09,49.1A5.64,5.64 0,0 1,59.45 43.46L59.45,24.38A5.64,5.64 0,0 1,65.09 18.74z"
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="6.0"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round" />
+            <path
+                android:pathData="M20.53,59.82L42.49,59.82A5.64,5.64 135,0 1,48.13 65.46L48.13,84.54A5.64,5.64 0,0 1,42.49 90.18L20.53,90.18A5.64,5.64 0,0 1,14.89 84.54L14.89,65.46A5.64,5.64 0,0 1,20.53 59.82z"
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="6.0"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round" />
+            <path
+                android:pathData="M65.09,59.82L87.04,59.82A5.64,5.64 0,0 1,92.69 65.46L92.69,84.54A5.64,5.64 0,0 1,87.04 90.18L65.09,90.18A5.64,5.64 0,0 1,59.45 84.54L59.45,65.46A5.64,5.64 0,0 1,65.09 59.82z"
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="6.0"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round" />
+            <path
+                android:pathData="M48.13,49.1 L59.45,59.82"
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="6.0"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round" />
+        </group>
+    </group>
+</vector>

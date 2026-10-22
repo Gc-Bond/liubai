@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 顶栏整条的承载面。和 @drawable/dock_bg 是一对镜像:同样通栏到边、同样不留圆角
+     (通栏之后左右两端就是屏幕边缘,圆角会在两个上角豁开小口子)。
+
+     **这里没有 stroke**:shape 的描边是四边一起画的,而顶栏只有下边那条有意义 ——
+     上/左/右三条正好压在屏幕边缘上,看出来就是"顶栏没和屏幕边框贴合、四周镶了道边"
+     (2026-08-18 平板上实测)。下边那条改由 StatusBarView 自绘,见那边的 dispatchDraw。
+
+     底色运行时由 ModeApplier 按模式覆盖(见 window_status_bar.xml 的 tag)。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/surface" />
+</shape>

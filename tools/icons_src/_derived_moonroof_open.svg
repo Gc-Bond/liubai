@@ -1,0 +1,4 @@
+<!-- 天窗开：车顶框 + 向下三角
+     车顶框取自 default_quick_panels_sky，三角取自 default_quick_panels_window_open_w_icon。
+     两者同一套 105.83x52.92 坐标系，三角本就画在框中心，一个坐标没动。 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 105.83 52.92"><path d="M35.23,9.95L70.6,9.95A3.68,3.61 0,0 1,74.28 13.56L74.28,39.36A3.68,3.61 0,0 1,70.6 42.97L35.23,42.97A3.68,3.61 0,0 1,31.55 39.36L31.55,13.56A3.68,3.61 0,0 1,35.23 9.95z" fill="#ffffff" fill-rule="evenodd" stroke="#ffffffff" stroke-width="3.0" stroke-linecap="round" stroke-linejoin="round"/><path d="M57.02,24.15 L52.93,31.26 48.81,24.16Z" fill="#ffffffff" stroke="#ffffffff" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/></svg>

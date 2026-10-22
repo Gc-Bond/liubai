@@ -1,0 +1,1261 @@
+<style>
+/* 配色收成一组变量,浅色主题只覆盖这一组(见 body.light)。
+   **语义色单列**:连发的金、组合键的蓝、锁定的绿、断开的红 —— 那几个在两套主题里
+   都得是同一个"意思",只是深浅不同,所以也进变量,不是写死。 */
+:root {
+  --bg: #0b0b0d;          /* 页面底 */
+  --panel: rgba(28,28,33,.94);   /* 浮层(金手指面板、提示条) */
+  --stick: rgba(20,20,24,.85);   /* 摇杆盘面 */
+  --key: #1c1c21;         /* 按键底 */
+  --key2: #26262c;        /* 次级底:内圈、chip */
+  --line: #2a2a32;        /* 描边、分隔 */
+  --fg: #d5d5dd;          /* 主文字 */
+  --dim: #8a8a92;         /* 次文字 */
+  --dim2: #55555c;        /* 更弱的:顶栏、说明 */
+  --hint: #2c2c34;        /* 摇杆上那四个方向提示 */
+  --selbg: #17243a;       /* 选中的键 */
+  --selfg: #cfe0ff;
+  --turbo-bd: #7a5a20;    /* 连发:金 */
+  --turbo-fg: #b08040;
+  --combo-bd: #1f4a7a;    /* 组合键:蓝 */
+  --combo-fg: #6ba3d8;
+  --lock-bd: #2c6b3a;     /* 锁定:绿 */
+  --lock-fg: #6fc07f;
+  --warn: #d98080;
+}
+/* 白天。**不是把深色反过来那么简单**:按键底要比页面底更亮(浮起来),
+   而深色里是更暗 —— 所以两套各写各的,别用滤镜反色 */
+body.light {
+  --bg: #eceef2;
+  --panel: rgba(255,255,255,.97);
+  --stick: rgba(255,255,255,.88);
+  --key: #ffffff;
+  --key2: #e2e5ec;
+  --line: #c9cdd6;
+  --fg: #17181c;
+  --dim: #5c606a;
+  --dim2: #8b8f99;
+  --hint: #b8bcc6;
+  --selbg: #d6e5ff;
+  --selfg: #0a4a9e;
+  --turbo-bd: #c79a3e;
+  --turbo-fg: #8a6410;
+  --combo-bd: #7fb0e0;
+  --combo-fg: #14538f;
+  --lock-bd: #7fc48f;
+  --lock-fg: #1d6b32;
+  --warn: #c04040;
+}
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+      touch-action: none; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg);
+      color: var(--fg); font-family: -apple-system, "PingFang SC", sans-serif; }
+
+  /* 竖屏时挡住整个界面,只提示转横屏 —— 手柄在竖屏上放不下,
+     硬塞的结果就是按键被挤出屏幕外(第一版就是这么翻车的) */
+  #rotate { position: fixed; inset: 0; z-index: 99; display: none;
+      flex-direction: column; align-items: center; justify-content: center;
+      background: var(--bg); text-align: center; gap: 18px; padding: 30px; }
+  #rotate .ico { font-size: 64px; animation: tilt 1.6s ease-in-out infinite; }
+  #rotate .t { font-size: 20px; }
+  #rotate .s { font-size: 14px; color: var(--dim2); line-height: 1.7; }
+  @keyframes tilt { 0%,100% { transform: rotate(0) } 50% { transform: rotate(-90deg) } }
+  @media (orientation: portrait) { #rotate { display: flex; } }
+
+  #bar { position: fixed; top: 0; left: 0; right: 0; height: 34px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right));
+      font-size: 12px; color: var(--dim2); z-index: 5; }
+  #dot { width: 7px; height: 7px; border-radius: 50%; background: #f87171; margin-right: 6px; }
+  #stat { display: flex; align-items: center; }
+  body.ok #dot { background: #4ade80; }
+
+  /* 手柄区:左十字键、中间功能键、右动作键。用 vh 定尺寸,任何手机都放得下 */
+  #pad { position: fixed; inset: 34px 0 0 0; display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 0 max(4vw, env(safe-area-inset-right)) 2vh max(4vw, env(safe-area-inset-left)); }
+
+  /* 十字键:位置固定,长得就是那个十字。判定和摇杆共用一套扇区逻辑,
+     区别只在**必须按在十字上**(摇杆是左半屏按哪都行)。
+     两种各有各的道理,所以让用户自己选:摇杆盲操作好找(手指落哪就是中心),
+     十字键是肌肉记忆、方向更"咬得住",玩俄罗斯方块那类的人认这个 */
+  #stick.dpad { border-radius: 8%;
+      clip-path: polygon(34% 0, 66% 0, 66% 34%, 100% 34%, 100% 66%, 66% 66%,
+                         66% 100%, 34% 100%, 34% 66%, 0 66%, 0 34%, 34% 34%); }
+  #stick.dpad #knob { width: 26%; height: 26%; margin: -13% 0 0 -13%; }
+
+  /* 摇杆是**浮动**的:手指按在左半屏哪儿它就长在哪儿 —— 位置不用设置,天然合手。
+     固定位置无论摆在哪都会有人别扭,这是手游里早就验证过的做法。 */
+  #zone { position: fixed; left: 0; top: 36px; bottom: 0; width: 50%; z-index: 1; }
+  #stick { position: fixed; width: 40vh; height: 40vh; display: none; z-index: 2;
+      border-radius: 50%; background: var(--stick); border: 0.3vh solid var(--line);
+      /* **只是画面,不吃触摸。** 它层级压在感应区 #zone 之上,以前只在按下时才显示
+         所以没露馅;改成待机常驻之后,手指落在摇杆上就被它接走了 —— 表现是
+         "摇杆那块地方按了没反应",而恰恰那儿才是最该有反应的地方。
+         方向判定一直在 #zone 那边做(十字键也是,见 insideDpad),这儿不需要事件 */
+      pointer-events: none; }
+  #stick.show { display: block; }
+  /* **待机态**:摇杆是浮动的(按哪长哪),但一直不显示的话进来左边就是一片黑,
+     人不知道那儿能控方向。所以待机时淡淡地摆在默认位置,手指一按才跟过去、亮起来。
+     transition 只给 opacity —— left/top 也加过渡的话跟手就慢半拍,手感直接废 */
+  #stick { transition: opacity .15s; }
+  #stick.idle { opacity: .32; }
+  #stick .ring { position: absolute; inset: 12%; border-radius: 50%;
+      border: 0.25vh dashed var(--line); }
+  #knob { position: absolute; left: 50%; top: 50%; width: 19vh; height: 19vh;
+      margin: -9.5vh 0 0 -9.5vh; border-radius: 50%; background: var(--line);
+      box-shadow: 0 0.5vh 1.5vh rgba(0,0,0,.5);
+      /* 拖动时**不能**有 transform 过渡:跟手的元素加动画就会慢半拍,手感直接废掉。
+         只有松手回中那一下才需要弹回效果,靠 .home 这个类临时开启。 */
+      transition: background .05s; }
+  #knob.home { transition: background .05s, transform .12s cubic-bezier(.2,.9,.3,1.4); }
+  #knob.act { background: #006CDE; }
+  /* 四个方向的提示箭头,只是视觉,不吃触摸 */
+  #stick .hint { position: absolute; color: var(--hint); font-size: 3vh;
+      pointer-events: none; }
+  #stick .hu { left: 50%; top: 4%; transform: translateX(-50%) }
+  #stick .hd { left: 50%; bottom: 4%; transform: translateX(-50%) }
+  #stick .hl { left: 4%; top: 50%; transform: translateY(-50%) }
+  #stick .hr { right: 4%; top: 50%; transform: translateY(-50%) }
+
+  /* 动作键:绝对定位,位置可拖、记在本地 */
+  .btn { position: fixed; border-radius: 50%; background: var(--key); z-index: 3;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; color: var(--dim); }
+  .sm { position: fixed; border-radius: 3vh; background: var(--key); z-index: 3;
+      display: flex; align-items: center; justify-content: center;
+      letter-spacing: 2px; color: var(--dim); }
+  body.editing .btn, body.editing .sm { outline: 2px dashed var(--line); }
+  body.editing #stick.sel { border-color: #006CDE; }
+  body.editing .btn.sel, body.editing .sm.sel { outline: 3px solid #006CDE;
+      background: var(--selbg); color: var(--selfg); }
+  #edit, #keycount, #iosfs, #theme { padding: 6px 14px; border-radius: 14px; background: var(--key); color: var(--dim); }
+  /* 功能键面板:盖在整页上(打开时本来就不该同时操作游戏),自己滚 */
+  #ctl { position: fixed; inset: 6vh 4vw; background: var(--panel); z-index: 50;
+      border-radius: 18px; border: 1px solid var(--line); display: none;
+      flex-direction: column; padding: 14px 16px; }
+  body.ctlopen #ctl { display: flex; }
+  #ctlhd { display: flex; align-items: center; gap: 12px; color: var(--fg); font-size: 2.4vh; }
+  #ctltip { flex: 1; color: #7BE38A; font-size: 1.9vh; }
+  #ctlx { padding: 6px 16px; border-radius: 14px; background: var(--key2); color: var(--dim);
+      font-size: 2vh; }
+  /* 顶栏那排功能键。**纯图标**:横屏手机那点宽度摆不下八组图标+文字,
+     而这一排必须常驻 —— 收进二级面板的话,存个档要点两下 */
+  #ctlkeys { display: flex; align-items: center; gap: 6px; overflow-x: auto;
+      -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  /* **要显式放开手势**:上面那条 `* { touch-action: none }` 是为了让玩的时候
+     整页不会被滑走/缩放,而它把这两块**能滚的区域**也一起禁了 —— 金手指开着一百来条
+     却怎么也划不动(用户报的)。CSS 的 touch-action 不继承,`*` 是逐个元素设的,
+     所以子元素也得一起放开 */
+  #ctlkeys, #ctlkeys * { touch-action: pan-x; }
+  #ctlcheat, #ctlcheat * { touch-action: pan-y; }
+  #ctlkeys::-webkit-scrollbar { display: none; }
+  #ctlkeys span { padding: 5px 10px; border-radius: 12px; background: var(--key);
+      color: var(--dim); font-size: 13px; white-space: nowrap; }
+  #ctlkeys span.on { background: #006CDE; color: #fff; }
+  #ctlkeys span.pnum { background: var(--line); color: var(--fg); font-weight: 600;
+      min-width: 34px; text-align: center; }
+  /* 「已存档」这类一次性反馈:顶栏挤不下,浮一下就走 */
+  #toast { position: fixed; left: 50%; top: 46px; transform: translateX(-50%);
+      background: rgba(0,108,222,.92); color: #fff; font-size: 13px;
+      padding: 6px 16px; border-radius: 14px; z-index: 60; display: none;
+      white-space: nowrap; }
+  /* 金手指:条数不定(拳皇 101 条),给它自己滚 */
+  #ctlcheat { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  #ctlcheat .ch { display: flex; align-items: center; justify-content: space-between;
+      padding: 11px 14px; margin-bottom: 7px; border-radius: 10px; background: var(--key2);
+      color: var(--fg); font-size: 2vh; }
+  #ctlcheat .ch.on { background: rgba(0,108,222,.22); color: #6BA8F0; }
+  #ctlcheat .ch b { font-weight: 400; color: var(--dim); font-size: 1.8vh; }
+  #ctlcheat .hint { color: var(--dim2); font-size: 1.9vh; padding: 8px 4px; }
+  #keycount { margin-left: auto; margin-right: 10px; }
+  #iosfs { margin-right: 10px; }
+  #iostip { position: fixed; left: 50%; top: 44px; transform: translateX(-50%);
+      background: var(--panel); color: var(--fg); font-size: 12px; line-height: 1.7;
+      padding: 10px 16px; border-radius: 14px; display: none; z-index: 40; max-width: 76vw; }
+  #iostip.show { display: block; }
+
+  /* 连发键和组合键**长得不一样** —— 盲操作时靠位置找键,但偶尔低头一眼要能
+     立刻分清哪颗是普通键。连发描一圈橙、组合键描一圈蓝,不填色(填了太抢眼) */
+  .btn.turbo, .sm.turbo { border: 0.35vh solid var(--turbo-bd); color: var(--turbo-fg); }
+  .btn.combo, .sm.combo { border: 0.35vh solid var(--combo-bd); color: var(--combo-fg); }
+  .btn.lock,  .sm.lock  { border: 0.35vh solid var(--lock-bd); color: var(--lock-fg); }
+  /* 锁定键按下去是"卡住"的状态,得比普通按下更显眼 */
+  .btn.lock.on, .sm.lock.on { background: var(--lock-bd) !important; color: #fff !important; }
+  body.editing #edit { background: #006CDE; color: #fff; }
+  /* 编辑用的浮层一律贴顶:按键默认都在中下部,放底部正好把 START 压住。
+     另外整条半透明,拖动时也能看清底下的键。 */
+  #sizer { position: fixed; left: 50%; top: 40px; transform: translateX(-50%);
+      display: none; flex-direction: column; gap: 8px; z-index: 30;
+      background: var(--panel); padding: 10px 16px; border-radius: 20px; }
+  body.editing #sizer { display: flex; }
+  #sizer .row { display: flex; align-items: center; gap: 10px; }
+  #sizer input { width: 26vw; touch-action: auto; accent-color: #006CDE; }
+  #sizer .lbl { font-size: 12px; color: var(--dim); white-space: nowrap; }
+  /* 没选中键时"发什么/怎么按"那一行没意义,整行收起 */
+  #sizer #bindrow { display: none; }
+  body.editing.picked #sizer #bindrow { display: flex; }
+  #idpick, #modepick, #dirpick { display: flex; gap: 4px; }
+  #idpick span, #modepick span, #dirpick span { font-size: 12px; color: var(--dim);
+      padding: 5px 9px; border-radius: 8px; background: var(--key2); white-space: nowrap; }
+  #idpick span.on, #modepick span.on, #dirpick span.on { background: #006CDE; color: #fff; }
+  #sizer .act { font-size: 12px; color: var(--dim); padding: 5px 10px;
+      border-radius: 8px; background: var(--key2); white-space: nowrap; }
+  #sizer .act.del { color: var(--warn); }
+  #tip { position: fixed; left: 50%; top: 112px; transform: translateX(-50%);
+      background: var(--panel); color: var(--dim); font-size: 11px;
+      padding: 5px 14px; border-radius: 14px; display: none; z-index: 30;
+      white-space: nowrap; }
+  body.editing #tip { display: block; }
+  /* 手指压在浮层上时让它淡下去,不挡视线 */
+  #sizer:active, #sizer:has(input:active) { opacity: .35; }
+
+  /* 刚改过绑定/按法的那颗闪一下:布局里可能本来就有同名的键(出厂就带「连A」),
+     不给个"是这颗变了"的提示,用户会以为凭空新建了一颗 */
+  @keyframes justchanged {
+    0%   { box-shadow: 0 0 0 0.5vh rgba(0,108,222,.95); }
+    100% { box-shadow: 0 0 0 0.5vh rgba(0,108,222,0); }
+  }
+  .btn.changed, .sm.changed { animation: justchanged .7s ease-out; }
+
+  .on { background: #006CDE !important; color: #fff !important; transform: scale(.93); }
+  .k, .btn, .sm { transition: background .04s, transform .04s; }
+</style>
+</head>
+<body>
+
+<div id="rotate">
+  <div class="ico">📱</div>
+  <div class="t">请把手机横过来</div>
+  <div class="s">手柄需要横屏<br>横过来后点一下屏幕进入全屏</div>
+</div>
+
+<div id="bar">
+  <div id="stat"><span id="dot"></span><span id="txt">连接中…</span></div>
+  <div id="keycount" style="display:none">4 键</div>
+  <div id="ctlkeys"></div>
+  <div id="iosfs" style="display:none">⤢ 全屏</div>
+  <div id="theme">🌙</div>
+  <div id="edit">调整位置</div>
+</div>
+
+<div id="zone"></div>
+<div id="stick"><div id="knob"></div></div>
+
+<!-- 按键是按当前机器生成的(见 LAYOUTS):街机六颗 + 投币,掌机两颗 + SELECT/START -->
+<div id="keys"></div>
+
+<!-- 车机左栏那排功能键的镜像。**除了「选游戏」** —— 那要整个列表页,手机上给不了 -->
+<!-- 金手指的那张表。功能键本身在顶栏上,这层只为"条数不定、要滚"的列表而存在 -->
+<div id="ctl">
+  <div id="ctlhd"><b>金手指</b><span id="ctltip"></span><span id="ctlx">关闭</span></div>
+  <div id="ctlcheat"></div>
+</div>
+
+<div id="sizer">
+  <div class="row">
+    <span class="lbl">大小 · <b id="szname">全部</b></span>
+    <input type="range" id="szr" min="70" max="190" value="100">
+    <span class="lbl" id="szv">100%</span>
+    <span class="lbl">方向</span>
+    <span id="dirpick"></span>
+    <span class="act" id="addkey">+ 加一颗</span>
+  </div>
+  <!-- 选中某颗键之后才出现:改它发什么、怎么按 -->
+  <div class="row" id="bindrow">
+    <span class="lbl">发什么</span>
+    <span id="idpick"></span>
+    <span class="lbl">怎么按</span>
+    <span id="modepick"></span>
+    <span class="act del" id="delkey">删掉</span>
+  </div>
+</div>
+<div id="iostip">iPhone 的浏览器不给网页全屏(到现在还藏在实验开关后面)。<br>
+要满屏就<b>分享 → 添加到主屏幕</b>,以后从那个图标进来,地址栏和底栏都没有。</div>
+<div id="toast"></div>
+<div id="tip">拖动摆位置 · 点一下选中某颗键 · 选中后可改「发什么」(勾多个就是组合键)和「怎么按」 · 双击「完成」复位</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let ws, alive = false, retry = null;
+
+// 我是几号玩家。地址里的 ?p=N 来自车机屏上那个二维码 —— 扫哪个就是哪号,
+// 不是先到先得。带进 WebSocket 的 URL 里,车机据此把按键写进对应的手柄口。
+let PLAYER = (() => {
+  const n = parseInt(new URLSearchParams(location.search).get('p') || '1', 10);
+  return (n >= 1 && n <= 4) ? n : 1;
+})();
+
+/**
+ * 换个玩家号。**要重连** —— 手柄口是车机在握手时按 URL 里的 `?p=` 认的
+ * (见 PadServer.portOf),连都连上了再说自己是几号,那边不认。
+ *
+ * 换之前先把按着的键松开:松手的消息还得从旧连接发出去,连接一断车机那边
+ * 就一直按着了(切后台那条路踩过)。
+ */
+function switchPlayer(n) {
+  if (n === PLAYER) return;
+  releaseAll();
+  PLAYER = n;
+  history.replaceState(null, '', '?p=' + n);   // 刷新页面后还是这一号
+  if (ws) { try { ws.onclose = null; ws.close(); } catch (e) {} }
+  ws = null;
+  alive = false;
+  document.body.classList.remove('ok');
+  $('#txt').textContent = 'P' + PLAYER + ' 连接中…';
+  connect();
+}
+
+function connect() {
+  if (ws && (ws.readyState === 0 || ws.readyState === 1)) return;   // 别开重复连接
+  ws = new WebSocket('ws://' + location.host + '/ws?p=' + PLAYER);
+  ws.onopen = () => {
+    alive = true; document.body.classList.add('ok');
+    $('#txt').textContent = 'P' + PLAYER + ' 已连接';
+    // 顶栏那排功能键要显示车机**现在**的状态(暂停位、倍速、静音…),
+    // 而车机不会无端推 —— 连上就问一次
+    send('Cq');
+  };
+  ws.onmessage = e => {
+    // "L<名字>" = 车机说该摆哪套键位了(连上时一次,换游戏再一次)
+    if (e.data && e.data[0] === 'L') { setLayout(e.data.slice(1)); return; }
+    // "S{...}" = 车机把当前状态推过来了(暂停位/倍速/静音/全屏/金手指表)
+    if (e.data && e.data[0] === 'S') {
+      try { applyPadState(JSON.parse(e.data.slice(1))); } catch (err) {}
+      return;
+    }
+    // "P<时间戳>" = 心跳的回声。**不再显示往返毫秒数**(占着顶栏的地方,
+    // 而玩的时候没人看那串数)—— 心跳本身留着,见文件末尾那句
+  };
+  ws.onclose = () => {
+    alive = false; document.body.classList.remove('ok');
+    $('#txt').textContent = 'P' + PLAYER + ' 断开，重连中…';
+    // 只排一个重连定时器。第一版没做这个判断，断线时会不停堆连接，
+    // 而车机侧每个连接开一个线程 —— 那是能把车机拖死的。
+    clearTimeout(retry);
+    retry = setTimeout(connect, 1000);
+  };
+  ws.onerror = () => { try { ws.close(); } catch (e) {} };
+}
+connect();
+
+function send(s) { if (alive) try { ws.send(s); } catch (e) {} }
+
+// ---------- 键位:按机器不同,由车机下发 ----------
+//
+// **同一个键号在两台机器上不叫一个名字。** 任天堂那边 id 0 是 B、id 8 是 A;
+// 街机那边 id 0 是 A、id 8 是 B(FBNeo 的 retropad 映射就是这么排的)。
+// 所以键位表不能写死一套 —— 车机在连上时和换游戏时会发一条 "L<名字>" 过来。
+//
+// 街机给六颗:NeoGeo 那一挂(拳皇/侍魂/合金弹头)用左边 ABCD 那个田字,
+// CPS 的六键(街霸)正好占满 2×3。多出来的两颗碍不着谁,不够用才是真的玩不了。
+// 位置全是百分比,与屏幕尺寸无关。
+//
+// 一颗键可以绑**多个** id(组合键)或者标 turbo(连发):
+//   ids: [0, 8]   → 按下同时发 D0、D8。清关游戏的必杀技(攻击+跳)全是这个,
+//                    而**盲操作时按准两颗分开的键很难**(眼睛在车机屏上,
+//                    手指滑掉了自己都不知道),所以给一颗合成键。
+//   turbo: true   → 发 F/f,车机每 6 帧翻一次(见 Retro.nativeTurbo)。
+//                    国行红白机手柄那两颗「连A/连B」,魂斗罗、沙罗曼蛇的刚需。
+const LAYOUTS = {
+  // FC/GB/GBC:照国行四键手柄还原(A、B、连A、连B),外加一颗必杀
+  // 摆法照国行手柄:连发键在主键**正上方**、A/B 水平并排。
+  // 并排而不是斜排是有讲究的 —— 盲操作时"两颗一样高"比"一上一下"好找,
+  // 而且真想同时压 A 和 B 时,一根拇指横着压得住
+  pad: [
+    { k: 'tb',  ids: [0], turbo: true, label: '连B', x: 74, y: 40, r: 8 },
+    { k: 'ta',  ids: [8], turbo: true, label: '连A', x: 91, y: 40, r: 8 },
+    { k: 'b1',  ids: [0],    label: 'B',      x: 74, y: 66, r: 12 },
+    { k: 'b2',  ids: [8],    label: 'A',      x: 91, y: 66, r: 12 },
+    { k: 'ab',  ids: [8, 0], label: 'A+B',    x: 82, y: 89, r: 8 },
+    { k: 'sel', ids: [2],    label: 'SELECT', x: 50, y: 63, w: 20, h: 7 },
+    { k: 'sta', ids: [3],    label: 'START',  x: 50, y: 84, w: 20, h: 7 },
+  ],
+  // GBA 比 GB 多两颗**肩键**(L/R):马里奥赛车漂移、火焰纹章翻页、黄金太阳、
+  // 宝可梦的快捷全在这两颗上,不给就是一堆游戏玩不利索。
+  // 摆在顶部两角 —— 真机上它们在机身背面上沿,横握手机时食指自然搭在那儿
+  gba: [
+    { k: 'b1',  ids: [0],    label: 'B',      x: 74, y: 66, r: 12 },
+    { k: 'b2',  ids: [8],    label: 'A',      x: 91, y: 66, r: 12 },
+    { k: 'ab',  ids: [8, 0], label: 'A+B',    x: 82, y: 89, r: 8 },
+    { k: 'l',   ids: [10],   label: 'L',      x: 12, y: 20, w: 16, h: 7 },
+    { k: 'r',   ids: [11],   label: 'R',      x: 88, y: 20, w: 16, h: 7 },
+    { k: 'sel', ids: [2],    label: 'SELECT', x: 50, y: 63, w: 20, h: 7 },
+    { k: 'sta', ids: [3],    label: 'START',  x: 50, y: 84, w: 20, h: 7 },
+  ],
+  // 街机默认四键:NeoGeo 那一挂(拳皇、侍魂、合金弹头)就是 ABCD 一个田字,
+  // 六键是 CPS 的街霸才要。**默认给四颗、让键更大** —— 盲操作时"少而大"
+  // 比"全而小"重要得多(手指滑出去人是不知道的)。要六键在手柄页上一键切
+  arcade4: [
+    { k: 'b1',  ids: [0],    label: 'A',    x: 68, y: 38, r: 11 },
+    { k: 'b2',  ids: [8],    label: 'B',    x: 88, y: 38, r: 11 },
+    { k: 'b3',  ids: [1],    label: 'C',    x: 68, y: 72, r: 11 },
+    { k: 'b4',  ids: [9],    label: 'D',    x: 88, y: 72, r: 11 },
+    // 横版清关的必杀技全是「攻击+跳」,街机上就是 A+B
+    { k: 'ab',  ids: [0, 8], label: 'A+B',  x: 78, y: 92, r: 8 },
+    // 连发摆右上角,离主键区远一点 —— 它是偶尔用的,别跟 ABCD 抢地方
+    { k: 'ta',  ids: [0], turbo: true, label: '连A', x: 93, y: 14, r: 7 },
+    // 街机没有 SELECT,那颗就是投币口 —— 写「投币」比写 SELECT 好懂得多
+    { k: 'sel', ids: [2],    label: '投币',  x: 50, y: 58, w: 16, h: 7 },
+    { k: 'sta', ids: [3],    label: 'START', x: 50, y: 84, w: 16, h: 7 },
+  ],
+  arcade6: [
+    { k: 'b1',  ids: [0],    label: 'A',    x: 64, y: 40, r: 9 },
+    { k: 'b2',  ids: [8],    label: 'B',    x: 77, y: 40, r: 9 },
+    { k: 'b5',  ids: [10],   label: 'E',    x: 90, y: 40, r: 9 },
+    { k: 'b3',  ids: [1],    label: 'C',    x: 64, y: 68, r: 9 },
+    { k: 'b4',  ids: [9],    label: 'D',    x: 77, y: 68, r: 9 },
+    { k: 'b6',  ids: [11],   label: 'F',    x: 90, y: 68, r: 9 },
+    { k: 'ab',  ids: [0, 8], label: 'A+B',  x: 77, y: 90, r: 7 },
+    { k: 'sel', ids: [2],    label: '投币',  x: 50, y: 58, w: 16, h: 7 },
+    { k: 'sta', ids: [3],    label: 'START', x: 50, y: 84, w: 16, h: 7 },
+  ],
+};
+
+/**
+ * 车机只说「arcade」,四键还是六键由**手机这侧**定 —— 它是握在手里那个人的
+ * 偏好,不是车机能替他决定的事。选择记在本机,两套位置也各存各的。
+ */
+function resolveName(name) {
+  if (name !== 'arcade') return name;
+  return localStorage.getItem('arcadeKeys') === '6' ? 'arcade6' : 'arcade4';
+}
+
+/**
+ * 这台机器上,每个键号叫什么。
+ *
+ * 编辑模式里"这颗键发什么"的勾选表就是它,键面上的字也是照它拼的
+ * (勾了 0 和 8 就写「A+B」)。**同一个 id 在两台机器上名字不一样**,
+ * 所以按布局分开列。
+ */
+const KEYNAMES = {
+  pad:     { 0: 'B', 8: 'A', 1: 'Y', 9: 'X', 10: 'L', 11: 'R', 2: 'SELECT', 3: 'START' },
+  gba:     { 0: 'B', 8: 'A', 1: 'Y', 9: 'X', 10: 'L', 11: 'R', 2: 'SELECT', 3: 'START' },
+  arcade4: { 0: 'A', 8: 'B', 1: 'C', 9: 'D', 10: 'E', 11: 'F', 2: '投币', 3: 'START' },
+  arcade6: { 0: 'A', 8: 'B', 1: 'C', 9: 'D', 10: 'E', 11: 'F', 2: '投币', 3: 'START' },
+};
+
+/** 键面上写什么:照绑的键号拼(「A+B」),连发的加个「连」字。 */
+function labelFor(ids, turbo) {
+  const names = KEYNAMES[layoutName] || KEYNAMES.pad;
+  const s = ids.map(i => names[i] || ('#' + i)).join('+');
+  return (turbo ? '连' : '') + (s || '?');
+}
+
+let baseLayout = 'pad';    // 车机说的那个名字(pad / gba / arcade)
+let layoutName = 'pad';    // 实际用的(街机会 resolve 成 arcade4 或 arcade6)
+let layout = null;
+
+/**
+ * 这套键位的**出厂**值。
+ *
+ * 我们只提供原子键号,组合/连发/锁定这些**行为**是每颗键自己的属性,
+ * 用户在编辑模式里随便改(见 keyPanel)。这里给的只是一套够用的起点。
+ */
+function defaultsFor(name) {
+  // 摇杆默认 40vh(横屏手机上直径约 150px、半径 75px ≈ 拇指一个舒服的行程)。
+  // 原来是 52vh,实机偏大:占掉左半屏一大块,靠边按下时被 clamp 推得也更狠
+  const o = { stick: { size: 40 }, scale: 1, keys: {} };
+  for (const d of LAYOUTS[name]) {
+    const c = d.r ? { x: d.x, y: d.y, r: d.r } : { x: d.x, y: d.y, w: d.w, h: d.h };
+    c.ids = d.ids.slice();
+    // **默认给「自动连发」而不是「按住才连发」**:键上写着「连A」,人的预期就是
+    // 点一下它自己一直打(用户原话:「连发的能力应该是一直不停的攻击」)。
+    // 按住才连发那种手指得一直压着,和普通 A 的差别只剩频率,解放不了右手。
+    // 想要按住式的,编辑模式里把「怎么按」改成「连发」就是
+    c.mode = d.turbo ? 'lockturbo' : 'normal';
+    o.keys[d.k] = c;
+  }
+  return o;
+}
+
+/**
+ * 一颗键的四种按法。**原子的只有"按住"**,其余是两个维度的组合:
+ *   谁来保持 —— 手指按着(按住) / 点一下就卡住(锁定)
+ *   要不要自动重复 —— 不要(普通) / 要(连发)
+ *
+ * 缺了 `lockturbo` 那一格的话,魂斗罗这类"按一下发一颗"的游戏就没法解放右手:
+ * 光锁定是一直按着(只发一颗),光连发得手指按着不放。
+ */
+const MODES = [
+  { v: 'normal',    label: '按住' },
+  { v: 'turbo',     label: '连发' },      // 按住时车机每 6 帧翻一次
+  { v: 'lock',      label: '锁定' },      // 点一下一直按着,再点松开(赛车踩油门)
+  { v: 'lockturbo', label: '自动连发' },  // 点一下之后自己突突,手可以拿开(魂斗罗)
+];
+
+/** 这颗键是不是"点一下卡住"的那种(锁定 / 自动连发)。 */
+const isLatch = m => m === 'lock' || m === 'lockturbo';
+
+/** 这颗键的出厂尺寸 —— 滑块按它算百分比(见 syncSlider)。 */
+function defaultOf(k) {
+  return LAYOUTS[layoutName].find(d => d.k === k) || {};
+}
+
+/**
+ * 键位表的版本。**改了默认布局就把它 +1。**
+ *
+ * 不加这个的话:存过自定义位置的手机,新加的键会拿新默认坐标、老键还用旧的,
+ * 两套摆法混在一张屏上,看着像坐标算错了(实测踩过)。版本一变旧记录自然失效,
+ * 整套回到新默认 —— 用户重调一次位置,好过对着一屏乱摆的键找原因。
+ */
+const LAYOUT_VER = 5;
+
+// 每套键位**分开存**:街机摆好的六颗不该跑到掌机页上去
+const storeKey = () => 'padLayout' + LAYOUT_VER + '_' + layoutName;
+const saveLayout = () => { try { localStorage.setItem(storeKey(), JSON.stringify(layout)); } catch (e) {} };
+
+function loadLayout() {
+  let v = null;
+  try { v = JSON.parse(localStorage.getItem(storeKey())); } catch (e) {}
+  if (!v || !v.keys) v = defaultsFor(layoutName);
+  // 存过的布局里没有的键(比如加过键之后)按出厂位置补上,别让它没地方站
+  const def = defaultsFor(layoutName);
+  for (const k in def.keys) if (!v.keys[k]) v.keys[k] = def.keys[k];
+  if (!v.stick) v.stick = def.stick;
+  layout = v;
+}
+
+/**
+ * 按**用户的**键位表重建按钮(不是出厂表 —— 绑定和行为都可能被改过)。
+ *
+ * 切机器时整批换掉:键的个数和名字都变了。
+ */
+function buildKeys() {
+  const host = document.getElementById('keys');
+  // 换键之前先把按着的松开,不然那颗键会一直粘在车机上。
+  // **只管自己这批**:头一次调用时容器还是空的,forEach 一次都不进 —— 这很要紧,
+  // 那会儿摇杆那节的 const 还没初始化,碰它们就是 ReferenceError
+  host.querySelectorAll('[data-id]').forEach(up);
+  host.innerHTML = '';
+  for (const k in layout.keys) host.appendChild(makeKey(k, layout.keys[k]));
+}
+
+/** 建一颗键的 DOM。字面、配色、绑定全按它自己的 ids/mode 来。 */
+function makeKey(k, c) {
+  const ids = c.ids && c.ids.length ? c.ids : [0];
+  const mode = c.mode || 'normal';
+  const el = document.createElement('div');
+  el.className = (c.r ? 'btn' : 'sm')
+      + (mode === 'turbo' || mode === 'lockturbo' ? ' turbo' : '')
+      + (isLatch(mode) ? ' lock' : '')
+      + (ids.length > 1 ? ' combo' : '');
+  // data-id 留着:releaseAll 和"按着的键"都按它找(组合键取第一个够用)
+  el.dataset.id = ids[0];
+  el.dataset.ids = ids.join(',');
+  el.dataset.mode = mode;
+  el.dataset.key = k;
+  el.textContent = labelFor(ids, mode === 'turbo' || mode === 'lockturbo');
+  bindKey(el);
+  return el;
+}
+
+/** 车机说该摆哪套键位了(连上时发一次,换游戏再发一次)。 */
+function setLayout(name) {
+  baseLayout = name;
+  const real = resolveName(name);
+  if (!LAYOUTS[real] || real === layoutName) return;
+  layoutName = real;
+  selKey = null;
+  loadLayout();
+  buildKeys();
+  applyLayout();
+  applyDirMode();
+  syncSlider();
+  syncKeyCountBtn();
+}
+
+/** 街机四键 ⇄ 六键。只有街机有这个开关,记在本机。 */
+function toggleKeyCount() {
+  if (baseLayout !== 'arcade') return;
+  localStorage.setItem('arcadeKeys', layoutName === 'arcade6' ? '4' : '6');
+  layoutName = '';           // 逼 setLayout 重建(下面 resolve 出来的名字变了)
+  setLayout('arcade');
+}
+
+function syncKeyCountBtn() {
+  const b = document.getElementById('keycount');
+  if (!b) return;
+  const isArcade = baseLayout === 'arcade';
+  b.style.display = isArcade ? '' : 'none';
+  b.textContent = layoutName === 'arcade6' ? '6 键' : '4 键';
+}
+
+function applyLayout() {
+  const K = layout.scale || 1;
+  const st = document.getElementById('stick');
+  if (st && layout.stick) { const ss = layout.stick.size * K;
+    st.style.width = ss + 'vh'; st.style.height = ss + 'vh';
+    const kn = document.getElementById('knob'); const ks = ss * 0.42;
+    kn.style.width = ks + 'vh'; kn.style.height = ks + 'vh';
+    kn.style.margin = `-${ks/2}vh 0 0 -${ks/2}vh`; }
+  for (const key in layout.keys) {
+    const el = document.querySelector(`[data-key="${key}"]`);
+    if (!el) continue;
+    const c = layout.keys[key];
+    if (!c || typeof c !== 'object') continue;
+    const w = (c.r ? c.r * 2 : c.w) * K, h = (c.r ? c.r * 2 : c.h) * K;
+    el.style.width = w + 'vh'; el.style.height = h + 'vh';
+    el.style.fontSize = (c.r ? c.r * 0.62 : c.h * 0.34) * K + 'vh';
+    el.style.left = `calc(${c.x}% - ${w / 2}vh)`;
+    el.style.top  = `calc(${c.y}% - ${h / 2}vh)`;
+  }
+  // 十字键是常驻的,尺寸变了要重新按新半径摆一次
+  if (typeof isDpad === 'function' && isDpad()) placeDpad();
+}
+
+
+document.getElementById('keycount').addEventListener('click', toggleKeyCount);
+
+// ---------- 编辑模式 ----------
+let editing = false, lastTap = 0;
+$('#edit').addEventListener('click', () => {
+  const now = Date.now();
+  if (now - lastTap < 400) {             // 双击复位,摆乱了能一键回来
+    layout = defaultsFor(layoutName);
+    selKey = null; document.body.classList.remove('picked');
+    buildKeys(); applyLayout(); saveLayout();
+  }
+  lastTap = now;
+  editing = !editing;
+  document.body.classList.toggle('editing', editing);
+  $('#edit').textContent = editing ? '完成' : '调整位置';
+  if (!editing) {
+    selKey = null;
+    document.body.classList.remove('picked');
+    document.querySelectorAll('[data-key]').forEach(el => el.classList.remove('sel'));
+    saveLayout();
+  }
+  buildKeyPanel();
+  syncSlider();
+});
+
+document.getElementById('addkey').addEventListener('click', addKey);
+document.getElementById('delkey').addEventListener('click', delKey);
+
+// 滑块统一缩放 —— 双指捏在按键上很别扭(手指会挡住要看的东西),滑块直观得多。
+// **方向键也走这一套**:它曾经是双指捏合的特例,等于同一件事有两种手势,
+// 而且捏合还得两根手指都落在左半区、把要看的摇杆整个盖住(用户提的)
+let selKey = null;          // 编辑模式下被选中的那个键;null = 调全体
+/** selKey 的特殊值:选中的是方向键(摇杆/十字键),不是某颗动作键。 */
+const DIR = '__dir';
+
+// 点一下某个键就选中它,滑块只作用于它 —— START/SELECT 是窄胶囊,
+// 双指捏根本放不下两根手指,必须有单独调的路子。
+function selectKey(key) {
+  selKey = (selKey === key) ? null : key;      // 再点一次取消选中
+  document.querySelectorAll('[data-key]').forEach(el =>
+      el.classList.toggle('sel', el.dataset.key === selKey));
+  const st = document.getElementById('stick');
+  if (st) st.classList.toggle('sel', selKey === DIR);
+  // picked 管的是「发什么 / 怎么按」那两排 —— 方向键没有键号可绑,不显示
+  document.body.classList.toggle('picked', !!selKey && selKey !== DIR);
+  buildKeyPanel();
+  syncSlider();
+}
+
+/**
+ * 选中那颗键的「发什么 / 怎么按」两排。
+ *
+ * **我们只提供原子键号**,组合(勾多个)、连发、锁定这些行为都在这儿由用户自己配 ——
+ * 拳皇要 ABC 爆气、街霸要三拳同按、恐龙快打要 A+B 必杀,预设猜不完。
+ */
+/** 方向那两个选项(摇杆 / 十字键)。不用选中键也能改,所以单独建。 */
+function buildDirPanel() {
+  const dp = document.getElementById('dirpick');
+  if (!dp) return;
+  dp.innerHTML = '';
+  for (const d of [{ v: 'stick', label: '摇杆' }, { v: 'dpad', label: '十字键' }]) {
+    const b = document.createElement('span');
+    b.textContent = d.label;
+    b.className = (layout.dir || 'stick') === d.v ? 'on' : '';
+    b.onclick = () => {
+      layout.dir = d.v;
+      applyDirMode();
+      saveLayout();
+      buildDirPanel();
+    };
+    dp.appendChild(b);
+  }
+}
+
+function buildKeyPanel() {
+  const idp = document.getElementById('idpick'), mp = document.getElementById('modepick');
+  idp.innerHTML = ''; mp.innerHTML = '';
+  buildDirPanel();
+  if (!selKey || selKey === DIR) return;   // 方向键只有大小和摇杆/十字键之分
+  const c = layout.keys[selKey];
+  const names = KEYNAMES[layoutName] || KEYNAMES.pad;
+
+  for (const idStr in names) {
+    const id = +idStr;
+    const b = document.createElement('span');
+    b.textContent = names[id];
+    b.className = c.ids.includes(id) ? 'on' : '';
+    b.onclick = () => {
+      const i = c.ids.indexOf(id);
+      if (i >= 0) { if (c.ids.length > 1) c.ids.splice(i, 1); }   // 至少留一个
+      else c.ids.push(id);
+      refreshKey();
+    };
+    idp.appendChild(b);
+  }
+
+  for (const m of MODES) {
+    const b = document.createElement('span');
+    b.textContent = m.label;
+    b.className = (c.mode || 'normal') === m.v ? 'on' : '';
+    b.onclick = () => { c.mode = m.v; refreshKey(); };
+    mp.appendChild(b);
+  }
+}
+
+/** 改完绑定/模式后:那颗键当场重建(字面、配色、手势都跟着变),存盘。 */
+function refreshKey() {
+  const old = document.querySelector(`[data-key="${selKey}"]`);
+  if (old) {
+    up(old);                       // 改之前先松手,免得旧绑定的键留在车机上按着
+    const el = makeKey(selKey, layout.keys[selKey]);
+    el.classList.add('sel', 'changed');
+    old.replaceWith(el);
+  }
+  applyLayout();
+  saveLayout();
+  buildKeyPanel();
+  syncSlider();
+}
+
+/** 加一颗空白键。默认绑第一个键号、摆在中间偏右,用户自己改绑定和位置。 */
+function addKey() {
+  const names = Object.keys(KEYNAMES[layoutName] || KEYNAMES.pad).map(Number);
+  const k = 'u' + Date.now().toString(36);
+  layout.keys[k] = { x: 70, y: 30, r: 9, ids: [names[0]], mode: 'normal' };
+  document.getElementById('keys').appendChild(makeKey(k, layout.keys[k]));
+  selectKey(k);
+  applyLayout();
+  saveLayout();
+}
+
+/** 删掉选中那颗。**出厂键也能删** —— 用不上的键在盲操作时就是干扰。 */
+function delKey() {
+  if (!selKey) return;
+  const el = document.querySelector(`[data-key="${selKey}"]`);
+  if (el) { up(el); el.remove(); }
+  delete layout.keys[selKey];
+  selKey = null;
+  document.body.classList.remove('picked');
+  saveLayout();
+  buildKeyPanel();
+  syncSlider();
+}
+
+function syncSlider() {
+  // 滑块那个 IIFE 会在初始化之前先调一次(它在脚本中段),那时 layout 还没读进来
+  if (!layout) return;
+  const sl = document.getElementById('szr'), lb = document.getElementById('szv');
+  const nm = document.getElementById('szname');
+  if (selKey === DIR) {
+    const base = defaultsFor(layoutName).stick.size;
+    sl.value = Math.round((layout.stick.size || base) / base * 100);
+    nm.textContent = layout.dir === 'dpad' ? '十字键' : '摇杆';
+  } else if (selKey) {
+    const c = layout.keys[selKey], d = defaultOf(selKey);
+    // 基准是**这套键位里这颗键的出厂尺寸** —— 街机的圆键比掌机小一号,
+    // 写死 12 的话街机上一进来滑块就显示 75%
+    const base = c.r ? (d.r || 12) : (d.h || 7.5);
+    const cur  = c.r ? c.r : c.h;
+    sl.value = Math.round(cur / base * 100);
+    nm.textContent = labelFor(c.ids, c.mode === 'turbo' || c.mode === 'lockturbo');
+  } else {
+    sl.value = Math.round((layout.scale || 1) * 100);
+    nm.textContent = '全部';
+  }
+  lb.textContent = sl.value + '%';
+}
+
+(() => {
+  const sl = document.getElementById('szr'), lb = document.getElementById('szv');
+  const onInput = () => {
+    const k = sl.value / 100;
+    if (selKey === DIR) {
+      // 夹到 22~66vh:再小方向就咬不住了,再大占掉半个屏还容易在边上误触
+      const base = defaultsFor(layoutName).stick.size;
+      layout.stick.size = Math.max(22, Math.min(66, base * k));
+    } else if (selKey) {
+      const c = layout.keys[selKey], d = defaultOf(selKey);
+      if (c.r) c.r = (d.r || 12) * k;
+      else { c.w = (d.w || 21) * k; c.h = (d.h || 7.5) * k; }
+    } else {
+      layout.scale = k;
+    }
+    lb.textContent = sl.value + '%';
+    applyLayout();
+  };
+  sl.addEventListener('input', onInput);
+  sl.addEventListener('change', () => { onInput(); saveLayout(); });
+  syncSlider();
+  // 滑块自己吞掉事件,别让它触发底下的摇杆感应区
+  ['pointerdown','pointermove','pointerup'].forEach(t =>
+    sl.addEventListener(t, e => e.stopPropagation()));
+})();
+
+// ---------- 动作键 ----------
+const held = new Map();
+
+/** 这颗键管哪几个 joypad 键号。组合键(A+B)就是两个。 */
+const idsOf = el => (el.dataset.ids || '').split(',').filter(s => s !== '');
+
+/** 这颗键按下/抬起该发什么字。连发走独立通道(F/f),车机那边按帧翻。 */
+const pressWord = el => el.dataset.mode === 'turbo' ? 'F' : 'D';
+const releaseWord = el => el.dataset.mode === 'turbo' ? 'f' : 'U';
+
+function down(el, pid) {
+  const key = el.dataset.key;
+  if (!key) return;
+
+  // 卡住型的两种(锁定 / 自动连发):点一下开、再点一下关,手指可以拿开。
+  // 赛车一直踩油门、魂斗罗一直突突,手指按着不动几分钟是真的累。
+  // 它们不进 held —— 没有"抬起"这回事
+  if (isLatch(el.dataset.mode)) {
+    const on = !el.classList.contains('on');
+    el.classList.toggle('on', on);
+    const turbo = el.dataset.mode === 'lockturbo';
+    const w = turbo ? (on ? 'F' : 'f') : (on ? 'D' : 'U');
+    for (const id of idsOf(el)) send(w + id);
+    if (navigator.vibrate) navigator.vibrate(on ? 14 : 8);
+    return;
+  }
+
+  if (held.has(key)) return;
+  held.set(key, pid);
+  el.classList.add('on');
+  // 组合键在这儿连着发两条,车机那边根本不用知道有"组合"这回事
+  for (const id of idsOf(el)) send(pressWord(el) + id);
+  if (navigator.vibrate) navigator.vibrate(8);
+}
+
+function up(el) {
+  const key = el.dataset.key;
+  if (!key || isLatch(el.dataset.mode)) return;   // 卡住型的不吃抬起
+  if (!held.has(key)) return;
+  held.delete(key);
+  el.classList.remove('on');
+  for (const id of idsOf(el)) send(releaseWord(el) + id);
+}
+
+/**
+ * 给一颗按钮绑上手势。**必须是函数声明**(不是 const):buildKeys() 在脚本
+ * 靠前的地方就要用它,箭头函数那种写法这时候还没初始化,一个 ReferenceError
+ * 下去整页就死在那儿了 —— 而手柄页出错是不声不响的,车机那边什么也看不出来。
+ *
+ * 编辑模式下:**拖=挪位置,轻点=选中**(选中之后大小走面板里那根滑块)。
+ * 大小曾经是"两指捏在这颗键上",和滑块重了 —— 同一件事两种手势,
+ * 而且捏的时候两根手指正好把要看的那颗键盖住。
+ */
+function bindKey(el) {
+  const ptrs = new Map();
+  let dragPid = null, offX = 0, offY = 0;
+  let moved = false, startX = 0, startY = 0;
+
+  el.addEventListener('pointerdown', e => {
+    e.preventDefault(); e.stopPropagation();
+    try { el.setPointerCapture(e.pointerId); } catch (err) {}
+    if (!editing) { down(el, e.pointerId); goFullscreen(); return; }
+
+    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (ptrs.size === 1) {
+      dragPid = e.pointerId;
+      moved = false;
+      startX = e.clientX; startY = e.clientY;
+      const r = el.getBoundingClientRect();
+      offX = e.clientX - (r.left + r.width / 2);
+      offY = e.clientY - (r.top + r.height / 2);
+    } else {
+      dragPid = null;                       // 第二根手指落上来就别挪了,免得跟着乱跑
+    }
+  });
+
+  el.addEventListener('pointermove', e => {
+    if (!editing || !ptrs.has(e.pointerId)) return;
+    e.preventDefault();
+    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const c = layout.keys[el.dataset.key];
+
+    if (dragPid === e.pointerId) {
+      if (Math.hypot(e.clientX - startX, e.clientY - startY) > 8) moved = true;
+      if (!moved) return;                       // 没挪动就当点击,留给选中
+      c.x = Math.max(5, Math.min(95, (e.clientX - offX) / innerWidth * 100));
+      c.y = Math.max(10, Math.min(93, (e.clientY - offY) / innerHeight * 100));
+      applyLayout();
+    }
+  });
+
+  const end = e => {
+    if (editing) {
+      ptrs.delete(e.pointerId);
+      if (dragPid === e.pointerId) {
+        dragPid = null;
+        if (!moved) selectKey(el.dataset.key);   // 轻点 = 选中,拖过就不算
+      }
+      saveLayout();
+      return;
+    }
+    up(el);
+  };
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', end);
+}
+
+document.getElementById('ctlx').addEventListener('click', () => {
+  document.body.classList.remove('ctlopen');
+  send('Cg0');                                    // 关了就接着玩(本来就暂停着的话不动它)
+});
+
+// ---------- 白天 / 黑夜 ----------
+//
+// 车里白天太阳照进来,深色底反光看不清;晚上浅色又晃眼。**手动切,不跟系统** ——
+// 手机的系统主题是按手机的作息来的,而这块屏此刻是车里的一部分。
+const THEME_KEY = 'padTheme';
+function applyTheme(t) {
+  const light = t === 'light';
+  document.body.classList.toggle('light', light);
+  const b = document.getElementById('theme');
+  if (b) b.textContent = light ? '☀' : '🌙';
+  try { localStorage.setItem(THEME_KEY, light ? 'light' : 'dark'); } catch (e) {}
+}
+const themeBtn = document.getElementById('theme');
+if (themeBtn) themeBtn.addEventListener('click', () => {
+  applyTheme(document.body.classList.contains('light') ? 'dark' : 'light');
+  if (navigator.vibrate) navigator.vibrate(8);
+});
+applyTheme((() => { try { return localStorage.getItem(THEME_KEY); } catch (e) { return null; } })() || 'dark');
+
+// ---------- 浮动摇杆 ----------
+const UP='4', DOWN='5', LEFT='6', RIGHT='7';
+const SECTORS = [[RIGHT],[RIGHT,UP],[UP],[LEFT,UP],[LEFT],[LEFT,DOWN],[DOWN],[RIGHT,DOWN]];
+const DEAD = 0.12;                       // 太大就要拖很远才响应,太小又误触。
+                                         // 格斗搓招时手指常在中心附近绕,给小一点
+
+const zone = $('#zone'), stick = $('#stick'), knob = $('#knob');
+let stickId = null, cx = 0, cy = 0, radius = 0, stickKeys = new Set();
+/** 上一次落在第几个扇区(0~7)。-1 = 没有方向。补中间方向要用(见 move)。 */
+let lastSector = -1;
+
+function applyKeys(next) {
+  // 只发变化量 —— 每次 move 全量重发会把连接刷爆
+  for (const k of stickKeys) if (!next.has(k)) send('U' + k);
+  for (const k of next) if (!stickKeys.has(k)) send('D' + k);
+  stickKeys = next;
+}
+/**
+ * 把摇杆摆到 (x, y)。
+ *
+ * @param keepInside 图形要不要整个留在屏幕里。**十字键要(true),摇杆不要(false)。**
+ *
+ * 摇杆这条曾经也 clamp 成"离屏边至少一个半径",结果是**一按就往反方向跑**:
+ * 浮动摇杆的语义是"按哪长哪",中心被推回屏内之后手指落点就不在中心上了,
+ * 那个偏移量当场被 move() 读成方向 —— 靠左边按下(x≈40)时中心被推到 102,
+ * 偏移 62px 远超死区(16%),按下瞬间就是一个「右」。摇杆越大推得越狠,
+ * 这就是"边缘不能太大"的由来。
+ *
+ * 正解是中心跟着手指走,图形该溢出就溢出 —— 拇指本来也不会往屏幕外面推,
+ * 溢出去那小半圈没人用得着。十字键相反:它是实打实要按在上面的键,
+ * 整个必须可见可点,所以那条保留 clamp。
+ */
+function place(x, y, keepInside) {
+  radius = (stick.offsetWidth || innerHeight * 0.4) / 2;
+  if (keepInside) {
+    cx = Math.max(radius, Math.min(innerWidth - radius, x));
+    cy = Math.max(radius + 36, Math.min(innerHeight - radius, y));
+  } else {
+    cx = x; cy = y;
+  }
+  stick.style.left = (cx - radius) + 'px';
+  stick.style.top  = (cy - radius) + 'px';
+}
+function move(x, y) {
+  const dx = x - cx, dy = y - cy, dist = Math.hypot(dx, dy);
+  const c = Math.min(dist, radius * 0.8);
+  knob.style.transform = dist ? `translate(${dx/dist*c}px, ${dy/dist*c}px)` : 'translate(0,0)';
+  if (dist / radius < DEAD) {
+    applyKeys(new Set()); knob.classList.remove('act'); lastSector = -1; return;
+  }
+  knob.classList.add('act');
+  let a = Math.atan2(-dy, dx) * 180 / Math.PI;
+  if (a < 0) a += 360;
+  const sec = Math.round(a / 45) % 8;
+
+  // **跨了不止一个扇区就得把中间那些补上。**
+  //
+  // 波动拳是「↓ ↘ →」三个方向的序列,而手指划过去往往是**直线**,不是圆弧 ——
+  // 从「↓」直接到「→」中间根本没有落在「↘」上的采样点,那一格就从没发出去过,
+  // 招自然搓不出来。浏览器 pointermove 再密也救不了这个:它忠实报告手指位置,
+  // 而手指确实没经过那儿。
+  //
+  // 补出来的中间方向只存在几毫秒,靠 native 那侧的"最短保持一帧"兜住
+  // (见 bridge.c 的 settle_pending_ups),否则核心照样读不到。
+  if (lastSector >= 0 && sec !== lastSector) {
+    let d = ((sec - lastSector) + 8) % 8;
+    if (d > 4) d -= 8;                       // 取短弧,-4..4
+    // 跨度 3 以内才补:再大多半是抬手重按或者甩了一下,补出来的是假动作
+    if (Math.abs(d) >= 2 && Math.abs(d) <= 3) {
+      // **按次数循环,别拿"走到没走到"当条件**:扇区是环形的,倒着走时
+      // `sm` 会一路减成负数、永远等不到终点 —— 那是个整页卡死的死循环
+      const step = d > 0 ? 1 : -1;
+      for (let n = 1; n < Math.abs(d); n++) {
+        const sm = (((lastSector + step * n) % 8) + 8) % 8;
+        applyKeys(new Set(SECTORS[sm]));
+      }
+    }
+  }
+  applyKeys(new Set(SECTORS[sec]));
+  lastSector = sec;
+}
+function stickEnd() {
+  stickId = null;
+  lastSector = -1;
+  // 松手回待机:摇杆挪回默认位置、淡下去(十字键本来就在那儿,不动)
+  if (!isDpad()) { placeDpad(); stick.classList.add('idle'); }
+  knob.style.transform = 'translate(0,0)';
+  knob.classList.remove('act');
+  applyKeys(new Set());
+}
+/** 方向输入是浮动摇杆还是固定十字键。 */
+const isDpad = () => (layout.dir || 'stick') === 'dpad';
+
+/**
+ * 十字键固定摆在哪(百分比)。摆好之后就不动了 —— 那正是它和摇杆的区别:
+ * 靠肌肉记忆找位置,方向"咬得住";摇杆是按哪长哪,不用找但没有固定参照。
+ */
+function placeDpad() {
+  const p = layout.dirPos || { x: 22, y: 62 };
+  // 待机位和十字键都要整个看得见,所以这条走 keepInside
+  place(innerWidth * p.x / 100, innerHeight * p.y / 100, true);
+}
+
+/** 手指是不是落在十字键上(十字外的地方不该响应,不然就成摇杆了)。 */
+function insideDpad(x, y) {
+  const r = stick.getBoundingClientRect();
+  return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+}
+
+/** 切到十字键就把它摆出来并常驻;切回摇杆就收起(按下才出现)。 */
+function applyDirMode() {
+  stick.classList.toggle('dpad', isDpad());
+  if (stickId !== null) return;          // 正按着就别动它
+  placeDpad();
+  stick.classList.add('show');
+  // 十字键是实打实的按键,常亮;摇杆待机时只是个"这儿能操作"的提示,压淡
+  stick.classList.toggle('idle', !isDpad());
+}
+
+zone.addEventListener('pointerdown', e => {
+  if (stickId !== null) return;
+  // 编辑模式下点方向键 = 选中它(滑块随即切到「摇杆/十字键」),按住还能拖位置。
+  // **摇杆待机时也画在屏上**(见 applyDirMode),所以两种模式都用 insideDpad 判定
+  if (editing) {
+    if (insideDpad(e.clientX, e.clientY)) {
+      if (selKey !== DIR) selectKey(DIR);
+      dragDpad = e.pointerId;
+      e.preventDefault();
+    }
+    return;
+  }
+  // 十字键**必须按在十字上**;摇杆是左半屏按哪都行,按哪长哪
+  if (isDpad()) {
+    if (!insideDpad(e.clientX, e.clientY)) return;
+  }
+  e.preventDefault();
+  stickId = e.pointerId;
+  try { zone.setPointerCapture(e.pointerId); } catch (err) {}
+  if (!isDpad()) place(e.clientX, e.clientY, false);   // 摇杆:按哪长哪,中心就是手指
+  stick.classList.add('show');
+  stick.classList.remove('idle');
+  move(e.clientX, e.clientY);
+  goFullscreen();
+  if (navigator.vibrate) navigator.vibrate(8);
+});
+
+/** 编辑模式下正在拖十字键的那根手指。 */
+let dragDpad = null;
+zone.addEventListener('pointermove', e => {
+  if (dragDpad === e.pointerId) {           // 编辑模式:把十字键拖到手指底下
+    e.preventDefault();
+    layout.dirPos = {
+      x: Math.max(8, Math.min(46, e.clientX / innerWidth * 100)),
+      y: Math.max(20, Math.min(88, e.clientY / innerHeight * 100)),
+    };
+    placeDpad();
+    return;
+  }
+  if (e.pointerId !== stickId) return;
+  e.preventDefault(); move(e.clientX, e.clientY);
+});
+const zoneEnd = e => {
+  if (dragDpad === e.pointerId) { dragDpad = null; saveLayout(); return; }
+  if (e.pointerId === stickId) stickEnd();
+};
+zone.addEventListener('pointerup', zoneEnd);
+zone.addEventListener('pointercancel', zoneEnd);
+
+// ---------- 收尾 ----------
+// 函数声明,不是 const —— buildKeys() 换键位前要先调它松键,而那发生在脚本靠前处
+// ---------- 功能键面板(车机左栏那排的镜像) ----------
+//
+// **除了「选游戏」** —— 那要整个列表页(封面、分类、翻页、下载),手机上给不了,
+// 也没必要:换游戏本来就是"这一局打完了"的动作,那会儿人抬头看车机屏是正常的。
+let padState = { p: 0, s: 10, m: 0, f: 0, a: 0, g: 0, c: null };
+/** 画面比例三档,和车机那颗键同一套(见 GameActivity 的 FIT_NAME)。 */
+const FITS = ['原', '还', '满'];
+let ctlTipTimer = 0;
+
+function applyPadState(st) {
+  padState = st || padState;
+  if (padState.t) toast(padState.t);      // 一次性反馈(「已存档」),浮一下就走
+  renderCtl();
+}
+
+function toast(text) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = text;
+  t.style.display = 'block';
+  clearTimeout(ctlTipTimer);
+  ctlTipTimer = setTimeout(() => { t.style.display = 'none'; }, 1800);
+}
+
+/** 一颗功能键。cmd 就是发给车机的那个字母(见 GameActivity.onPadCommand)。 */
+function ctlKey(row, label, cmd, on) {
+  const b = document.createElement('span');
+  b.textContent = label;
+  if (on) b.className = 'on';
+  b.onclick = () => { send('C' + cmd); if (navigator.vibrate) navigator.vibrate(8); };
+  row.appendChild(b);
+}
+
+/**
+ * 顶栏那排功能键 + 金手指列表。
+ *
+ * **常驻,不藏在二级面板里**(用户提的:「没必要再搞个控制按钮」)。代价是只能放图标 ——
+ * 横屏手机那点宽度摆不下八组图标+文字。带状态的那两颗把状态写出来:快进显示倍速、
+ * 金手指显示开着几条,别的靠高亮。
+ */
+function renderCtl() {
+  const row = document.getElementById('ctlkeys');
+  if (!row) return;
+  row.innerHTML = '';
+  const s = padState;
+  // 玩家号。**四个人围着车机屏时最常按的就是它** —— 谁坐哪儿是临时的,
+  // 而重新扫一次码太麻烦。点一下轮到下一号(轮到这台机器支持的人数为止)
+  const maxP = Math.max(1, Math.min(4, s.n || 1));
+  if (maxP > 1) {
+    const pb = document.createElement('span');
+    pb.textContent = 'P' + PLAYER;
+    pb.className = 'pnum';
+    pb.onclick = () => {
+      switchPlayer(PLAYER % maxP + 1);
+      if (navigator.vibrate) navigator.vibrate(8);
+    };
+    row.appendChild(pb);
+  }
+  ctlKey(row, s.p ? '▶' : '⏸', 'p', !!s.p);
+  ctlKey(row, s.s > 10 ? '⏩×' + (s.s / 10) : '⏩', 'f', s.s > 10);
+  ctlKey(row, '💾', 's');
+  ctlKey(row, '📂', 'l');
+  ctlKey(row, s.m ? '🔈' : '🔇', 'm', !!s.m);
+  ctlKey(row, '↺', 'r');
+  ctlKey(row, '⛶', 'F', !!s.f);
+  // 画面比例。**一颗键写着当前档**(原/还/满),点一下轮下一档 —— 车机屏上的
+  // 画面当场就变,不需要在手机这边再解释一遍是什么意思
+  ctlKey(row, '🖼' + FITS[s.a || 0], 'a', !!s.a);
+  // 金手指点开是一张能滚的表(条数不定),所以它单独开面板,别的都是一下就完的事
+  const on = s.c ? s.c.filter(c => c.o).length : 0;
+  const g = document.createElement('span');
+  g.textContent = on ? '🎲' + on : '🎲';
+  if (on) g.className = 'on';
+  g.onclick = () => {
+    send('Cc');                                   // 让车机把表取回来(已有就原样回)
+    releaseAll();
+    document.body.classList.add('ctlopen');
+    send('Cg1');                                  // 翻这一百来条的时候别让游戏还在跑
+    if (navigator.vibrate) navigator.vibrate(8);
+  };
+  row.appendChild(g);
+
+  const box = document.getElementById('ctlcheat');
+  box.innerHTML = '';
+  if (!s.c || !s.c.length) return;   // 还没取过 / 这个游戏没有:提示走 toast
+  s.c.forEach((c, i) => {
+    const d = document.createElement('div');
+    d.className = 'ch' + (c.o ? ' on' : '');
+    const n = document.createElement('span'); n.textContent = c.n;
+    const v = document.createElement('b');   v.textContent = c.v;
+    d.appendChild(n); d.appendChild(v);
+    d.onclick = () => { send('Cc' + i); if (navigator.vibrate) navigator.vibrate(8); };
+    box.appendChild(d);
+  });
+}
+
+function releaseAll() {
+  document.querySelectorAll('[data-id]').forEach(el => {
+    // 卡住的那颗也要放开 —— 切后台/换游戏时留着它,车机那边就一直按着
+    if (isLatch(el.dataset.mode)) {
+      if (!el.classList.contains('on')) return;
+      el.classList.remove('on');
+      const w = el.dataset.mode === 'lockturbo' ? 'f' : 'U';
+      for (const id of idsOf(el)) send(w + id);
+      return;
+    }
+    up(el);
+  });
+  if (typeof stickEnd === 'function') stickEnd();
+}
+window.addEventListener('blur', releaseAll);
+document.addEventListener('visibilitychange', () => { if (document.hidden) releaseAll(); });
+
+function goFullscreen() {
+  if (document.fullscreenElement) return;
+  const el = document.documentElement;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (req) req.call(el).catch(() => {});
+  if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {});
+}
+
+// ---------- 起手:所有 const 都初始化完了才能铺界面 ----------
+//
+// **这一段必须在脚本最末尾。** 摆在中间的话,applyDirMode() 会去碰摇杆那一节的
+// `const stick` —— 那时它还在 TDZ,一个 ReferenceError 下去,后面的绑定全没执行,
+// 而手柄页出错是不声不响的(壁纸那边有同样的账)。同一个坑这是第二次踩了。
+loadLayout();
+buildKeys();
+applyLayout();
+applyDirMode();      // 十字键是常驻的,进门就得摆出来
+buildDirPanel();     // 方向那两个选项不依赖"选中了哪颗键"
+syncSlider();        // 滑块那次是在 layout 读进来之前调的,补一次
+window.addEventListener('resize', () => { applyLayout(); applyDirMode(); });
+
+// iPhone 上 requestFullscreen 是必然失败的(Safari 到 17.2 才把它藏在实验开关后面,
+// 还有渲染 bug;iPad 从 16.4 起才正常)。goFullscreen 那个 catch 把失败吞了,
+// 表现就是"怎么按都不全屏",而人不知道是平台不给。
+// iOS 上唯一可靠的全屏是**加到主屏幕** —— 那时 apple-mobile-web-app-capable 生效
+(() => {
+  const ua = navigator.userAgent;
+  const iOS = /iPad|iPhone|iPod/.test(ua) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(ua));
+  const standalone = navigator.standalone === true
+      || matchMedia('(display-mode: standalone)').matches;
+  if (!iOS || standalone) return;      // 安卓和已加到主屏幕的都不打扰
+  const btn = document.getElementById('iosfs'), tip = document.getElementById('iostip');
+  btn.style.display = '';
+  btn.addEventListener('click', () => tip.classList.toggle('show'));
+  tip.addEventListener('click', () => tip.classList.remove('show'));
+})();
+
+// 心跳。**延迟数字不显示了,但这条不能删**:手机走出 Wi-Fi 或路由器悄悄断链时,
+// 只有还在写的连接才会较快报 error/close 触发重连;一条静着的 TCP 可以挂很久
+// 而两头都以为还连着(车机那边会一直显示"已连上")
+setInterval(() => send('P' + Date.now()), 500);
+</script>
+</body>
+</html>

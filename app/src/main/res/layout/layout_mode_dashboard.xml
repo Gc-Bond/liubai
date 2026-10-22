@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 主页层(三层结构最底下那层)。
+
+     原来这里是 2×2 功能卡:车况/音乐/导航/车控。整批去掉,主页重新回到留白,
+     新的主页功能从这张白纸上长出来。
+
+     去掉那批卡片时有一处连带变化要记着:音乐卡和导航卡原先兼着"画中画收起后的窗口 +
+     回去的入口",现在回画中画层只剩右侧层指示器(可点)和双指上下滑两条路。
+
+     **卡片不写在这个 XML 里** —— 它们能自己摆位置(见 DeskCard),摆哪儿由
+     DeskCardStore 存的比例决定,显不显示也是存出来的,所以只能由代码按存档挂上去
+     (见 HomeActivity.setupCards)。这里就是它们的画布。
+
+     整片空白是外观弹层的长按热区(见 HomeActivity.setupStage)。卡片自己吃触摸,
+     在卡片之外的地方长按照样弹外观 —— 那本来就还是桌面。 -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/home_layer"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" />

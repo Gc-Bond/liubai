@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 来源: _derived_moonroof_close.svg (BYD 原厂, 见 tools/icon_map.json)。别手改，改映射表重跑 tools/svg2vd.py -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <group
+        android:translateX="-12.7623"
+        android:translateY="-0.382331">
+        <group
+            android:scaleX="0.467964"
+            android:scaleY="0.467964">
+            <path
+                android:pathData="M35.23,9.95L70.6,9.95A3.68,3.61 0,0 1,74.28 13.56L74.28,39.36A3.68,3.61 0,0 1,70.6 42.97L35.23,42.97A3.68,3.61 0,0 1,31.55 39.36L31.55,13.56A3.68,3.61 0,0 1,35.23 9.95z"
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="3.0"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round" />
+            <path
+                android:pathData="M57.02,31.26 L52.93,24.15 48.81,31.25Z"
+                android:fillColor="#FFFFFFFF"
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="2.4"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round" />
+        </group>
+    </group>
+</vector>

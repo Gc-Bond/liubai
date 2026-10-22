@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 封面上的底部渐变蒙版:保证叠在封面上的文字在任何封面配色下都可读 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:startColor="#00000000"
+        android:centerColor="#73000000"
+        android:endColor="#E6000000"
+        android:angle="90" />
+</shape>

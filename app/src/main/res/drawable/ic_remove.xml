@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- close-line — MingCute Icon (Apache-2.0) https://github.com/mingcute-design/mingcute-icons
+     2026-08-14 整套换掉自绘/描摹的老图标。单色,运行时靠 tint 上色。
+     **别手改这个文件**,要换图标就换上面那个来源名,重新转一次。
+     选这个的理由:用在圆形按钮(circle_btn)和菜单项上,再套一层圈是重复。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="m5.636 5.637l12.728 12.728m-12.728 0L18.364 5.637" />
+</vector>

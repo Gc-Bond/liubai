@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 平台意义上的主题(style),**不是留白的「模式」** —— 那个在 mode/ 包里,
+         两件事同名易混,这里特别说明一句。
+         Material Components(AndroidX)基座,把留白色板映射进 Material 语义色,
+         组件(卡片/按钮/水波纹/阴影)自动跟随留白配色。无标题栏。
+
+         窗口背景/状态栏/导航栏不写死颜色:默认配色是浅色,写死黑等于每次冷启动先闪一帧黑
+         —— 改成跟 @color/bg 走,那份兜底色本来就是照默认模式同步的(见 colors.xml)。 -->
+    <style name="BlankTheme" parent="Theme.MaterialComponents.NoActionBar">
+        <item name="android:windowBackground">@color/bg</item>
+        <!--
+            两条系统栏一律**透明**,不要跟着 @color/bg 走。
+
+            2026-08-23 真车实测的一个 bug:用户报「打开应用中心再回主页,dock 那里
+            一道白线一闪而过」,而且「倒车影像也会」「应该是通病」。逐像素量下来是
+            y=990~995 那 6 个像素横贯全屏、亮度 245(几乎纯白):
+
+              NavigationBar0  y=990 起,90px      ← 系统导航栏
+              留白 Dock       y=996 起,84px(56dp) ← 盖不住上面那 6px
+
+            导航栏的颜色由**当前前台 app 的主题**定,而这里写的是 @color/bg —— 装机
+            默认配色是浅色 #F1F3F5,于是那 6px 是**留白自己涂上去的白**,
+            不是原厂的。切 app 那一瞬导航栏露面,就成了一道白线。
+
+            改成透明之后那 6px 显示的是它底下的内容(桌面上就是壁纸),和上方连成一片。
+            **不靠把 Dock 加高到 90px 去盖** —— 那是拿自己的高度迁就别人,而且 Dock
+            高度是调过好几轮的手感(见 dimens.xml 的 dock_space)。
+        -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+
+        <!-- Material 语义色 → 留白 token -->
+        <item name="colorPrimary">@color/accent</item>
+        <item name="colorPrimaryVariant">@color/accent</item>
+        <item name="colorOnPrimary">@color/on_accent</item>
+        <item name="colorSecondary">@color/accent</item>
+        <item name="colorOnSecondary">@color/on_accent</item>
+        <item name="colorSurface">@color/tile</item>
+        <item name="colorOnSurface">@color/ink</item>
+        <item name="android:colorBackground">@color/bg</item>
+        <item name="colorOnBackground">@color/ink</item>
+        <!-- 水波纹/按压高亮:低透明冷白 -->
+        <item name="colorControlHighlight">#26FFFFFF</item>
+    </style>
+
+    <!--
+        能透出背后的整页。设置页和全部应用页用它。
+
+        为什么要单开一套:这两页的根底跟着「面板底色」走(activity_settings 的
+        bg:surface),既然是面板,就该跟桌面上那些面板一样能调透明度。但**光给根底叠
+        alpha 没用** —— 基座里 windowBackground 写死黑色,底透了后面还是黑的,
+        看着只是"变暗"而不是"透出来",那才是不统一的根源。
+
+        windowBackground 不设 transparent 而是给一层 45% 黑,是拿它当 **scrim**:
+        桌面上的面板底下都垫着一层压暗(见 util/Scrim 的三档),透出来的桌面被压过一道,
+        白字才压得住亮壁纸。这两页没有独立的遮罩 view,就由窗口背景兼任 ——
+        色值取的正是 Scrim.HEAVY 那档(45% 中性黑)。**改这里要跟 Scrim 一起改。**
+
+        代价:半透明窗口下,背后的桌面不会 onStop(壁纸视频、画中画继续跑)。
+        车机上桌面本来就常驻,可接受;但画中画是 SurfaceView,叠在半透明窗口下的
+        z-order 要实机确认。
+    -->
+    <style name="BlankTheme.Translucent" parent="BlankTheme">
+        <item name="android:windowBackground">#73000000</item>
+        <item name="android:windowIsTranslucent">true</item>
+    </style>
+</resources>

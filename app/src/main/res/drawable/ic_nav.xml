@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 来源: free_item_direction_w_icon.svg (BYD 原厂, 见 tools/icon_map.json)。别手改，改映射表重跑 tools/svg2vd.py -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <group
+        android:translateX="4.24459"
+        android:translateY="0.233022">
+        <group
+            android:scaleX="0.418307"
+            android:scaleY="0.418307">
+            <path
+                android:pathData="m18.542,7.809c1.21,0 2.301,0.725 2.776,1.838L36.731,44.25c0.527,1.237 0.17,2.673 -0.875,3.52 -0.537,0.436 -1.207,0.674 -1.899,0.674 -0.6,0 -1.207,-0.18 -1.725,-0.542L18.893,38.584 4.791,47.941c-0.509,0.338 -1.088,0.503 -1.667,0.503 -0.686,0 -1.371,-0.234 -1.926,-0.694C0.174,46.898 -0.17,45.478 0.351,44.252L15.769,9.643c0.472,-1.112 1.563,-1.834 2.773,-1.834z"
+                android:fillColor="#FFFFFFFF" />
+        </group>
+    </group>
+</vector>

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 桌面 = 三层,不是多页。层从下到上:
+       ⓪ 壁纸      铺满整屏,在所有内容之下(见 wallpaper)
+       ① 主页层    永远在,不动。卡片已整批去掉,现在空着(见 layout_mode_dashboard.xml)
+       ② 画中画层  地图+音乐,开了才有内容,可以整层滑出画面(translationY)露出主页
+       ③ 第三方 app 全屏,那是系统 task,盖在整个桌面之上,不在这个布局里
+
+     为什么不用 ViewPager2:它内部是 RecyclerView,天生就要回收和复用页面,而这里的
+     需求恰恰相反 —— 页面上跑着虚拟屏,一旦被回收 TextureView 就没了,里面的 app 直接
+     被杀。原来那一串对抗手段(setOffscreenPageLimit、不许 notifyDataSetChanged、
+     页面高度钉死、尺寸变化后强制重测)全是在压制这个组件的天性。改成两个固定的兄弟
+     View 之后,尺寸恒定、没有回收,那些手段一个都不需要了。 -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- 壁纸。两种壁纸各有一个承载视图,同一时刻只有一个可见(见 HomeActivity.applyWallpaper):
+         静态图进 ImageView,视频进 TextureView + MediaPlayer —— 图片和视频在 Android 上
+         是两种绘制机制,没法共用一个视图。都铺满整屏、不吃 padding:内容那层的边距不能
+         在壁纸上留出黑边。两个都 GONE 时露出窗口背景(BlankTheme 的 windowBackground,纯黑)。
+         素材来自 assets/wallpapers/,由 WallpaperStore 取。 -->
+    <ImageView android:id="@+id/wallpaper"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:visibility="gone"
+        android:contentDescription="@null" />
+
+    <!-- 滑动切壁纸时**将要滑进来**的那一张。平时 GONE,不占资源。
+         为什么要单独一张而不是复用上面那个:跟手滑动要同时看见两张(当前的往外走、
+         新的跟着进来),一张 ImageView 做不到。滑动途中一律是静态图 —— 视频壁纸用它的
+         首帧(和 applyWallpaper 里垫底那张同一个来源),松手落定后才起播放器,
+         不然跟手阶段要实时解码两路视频,谈不上丝滑。 -->
+    <ImageView android:id="@+id/wallpaper_next"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:visibility="gone"
+        android:contentDescription="@null" />
+
+    <!-- 视频壁纸。用 TextureView 而不是 SurfaceView:SurfaceView 是独立的窗口层,
+         会在自己那一层上打个洞,盖不住也盖不严 —— 桌面这几层(主页/画中画/悬浮 Dock)
+         都得叠在壁纸之上,只有 TextureView 这种老老实实参与 View 树绘制的才排得对。 -->
+    <TextureView android:id="@+id/wallpaper_video"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <!-- 网页壁纸。第三种承载视图,和上面两个同样互斥。
+         为什么值得单开一层:Wallpaper Engine 的「web 类」壁纸就是一份标准的
+         HTML + JS + Canvas/WebGL,拷进来就能跑,而且**自带交互** —— 那些壁纸本来
+         就是照着鼠标/触摸写的。scene 类(.pkg/.mpkg)进不来,那是它私有的二进制,
+         解析器在它自己 40 多 MB 的 native 引擎里;video 类是 mp4/webm,走上面的
+         TextureView 就行。所以留白能吃的是 web 和 video 两类。
+         注意它默认有白底,得显式打成透明(见 HomeActivity.applyWallpaper),
+         否则壁纸没加载完会白闪一下。 -->
+    <!-- **必须是 ViewStub,不能把 WebView 直接写在这儿**:WebView 一被 inflate 就会拉起
+         整个 Chromium,2026-08-25 真车实测 setContentView 因此要 244ms(整个 onCreate 才 595ms),
+         而绝大多数人根本没选网页壁纸。那段主线程占用正是无障碍绑定撞不上窗口的主因
+         —— 撞不上就永久卡死(见 Overlay.ensureAccessibilityBound)。
+         位置要留在这儿:它得压在图片/视频壁纸之上、内容层之下,inflate 会原地替换。 -->
+    <ViewStub android:id="@+id/wallpaper_web_stub"
+        android:inflatedId="@+id/wallpaper_web"
+        android:layout="@layout/wallpaper_web"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- 内容层。原来这一层是根布局、带一块不透明的 bg 实色,壁纸接进来时去掉了 ——
+         留着的话壁纸永远被它盖死。现在它自己不画背景,底色由壁纸或窗口背景负责。
+         **不带内边距**(2026-09-06):原来这儿有左 10 / 右 16 / 上 10dp,是给桌面卡片留的边,
+         但画中画层和卡片层同住舞台,一起被收窄 —— 地图四周白留一圈壁纸。边距挪到主页层
+         自己的 margin 上(见 HomeActivity.setupStage),画中画层铺满舞台、贴到状态栏和 Dock。 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- 顶栏占位。顶栏和 Dock 一样是系统悬浮窗(见 StatusBarHost),不占布局空间,
+             不留这一块的话左上角那排车控键会被它压住。
+             高度由 StatusBarHost.applyTopSpace 在运行时按真实高度改写,XML 里是兜底值。 -->
+        <View
+            android:id="@+id/status_bar_space"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/status_bar_space" />
+
+        <!-- 这儿原来挂着一条"留白还不是默认桌面 · 点此设为默认"的提示丸。
+             2026-08-18 删掉:桌面上不该常驻这种自我推销的提示条 —— 该做的是把
+             「设为默认桌面」和别的几项授权收进一处正经入口(外观面板 › 权限的
+             「一键授权」,见 Grant),一次点完,而不是在壁纸上贴一条一直提醒人。 -->
+
+        <!-- 舞台:主页层和画中画层都叠在这里,两层都是 match_parent,尺寸恒定。
+             两层由代码 inflate 后插到 page_dots 之下(见 HomeActivity.setupStage)。 -->
+        <FrameLayout
+            android:id="@+id/stage"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipChildren="false">
+
+            <!-- 层指示器:双指上下滑是隐藏手势,这里给不知道手势的人一条明路(可点)。
+                 只在画中画层有内容时才出现 —— 没内容时"切换"没有意义。 -->
+            <LinearLayout
+                android:id="@+id/page_dots"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|center_vertical"
+                android:orientation="vertical"
+                android:gravity="center" />
+        </FrameLayout>
+
+        <!-- 底部 Dock 不在这里 —— 它是系统悬浮窗(见 DockHost),这样离开桌面时还在。
+             这里留一块和它等高的占位:悬浮窗不占布局空间,不留的话舞台会一直铺到屏幕
+             下缘、被 Dock 压住一条(见 @dimen/dock_space 的说明)。 -->
+        <View
+            android:id="@+id/dock_space"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/dock_space" />
+    </LinearLayout>
+</FrameLayout>

@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:tag="bg:bg;panel">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- 底部让出 dock_space:留白自己的包名恒在全局沉浸式白名单里(见 Immersive
+             .applyGlobal),系统导航栏这条安全区并不存在——不管这个 Activity 自己
+             调不调 Immersive.apply(),常驻 Dock 都会贴底浮出来,不留白就会整条盖住
+             底部工具栏。跟 AppDrawerActivity 同一个道理。 -->
+
+        <!-- 顶栏占位,同底部那条:顶栏也是系统悬浮窗,不留就会盖住进度条和地址栏。
+             高度由 StatusBarHost.applyTopSpace 运行时按真实高度改写。 -->
+        <View
+            android:id="@+id/status_bar_space"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/status_bar_space" />
+
+        <!-- 加载进度条:常驻占位,只在加载时有值,免得进度条一冒出来挤动下面内容一次。
+             留在顶上没关系——它不用点。 -->
+        <ProgressBar android:id="@+id/progress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:max="100"
+            android:progressTint="@color/accent"
+            android:progressBackgroundTint="@color/bg" />
+
+        <!-- 底色固定白:这是网页内容的衬底,网页自己就是白底,WebView 还没画出来时
+             闪一下白比闪一下黑自然。**不跟模式走** —— 以前用 @color/ink,浅色模式下
+             ink 是近黑,这里就成了黑底。 -->
+        <FrameLayout android:id="@+id/web_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="#FFFFFFFF">
+
+            <!-- 新标签页的起始态:还没导航过(tab.url 为空)时盖在 WebView 上面,
+                 一旦开始加载真网页(见 onPageStarted)就收起。搜索框 + 书签格子网——
+                 车机上不留常驻地址栏,想换网址就靠这个入口,不是先聚焦一条常驻输入框。 -->
+            <LinearLayout android:id="@+id/start_page"
+                android:tag="bg:bg"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/bg"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:paddingHorizontal="32dp"
+                android:paddingTop="150dp">
+
+                <!-- 起始页只有两件事:输入网址、点常用网址。所以东西全部集中在中上部
+                     (视线落点),而不是把搜索框顶在最上面、剩下整屏空着 —— 1080 高的屏上
+                     那种排法在深色模式下就是一大片黑、浅色下一大片白,看着像页面没加载出来
+                     (2026-09-12 用户原话:"要么黑的啥也看不到,要么白的啥也看不到")。
+                     宽度也收住:1920 宽拉满的输入框,光标跑到左边一米外,车上够不着。 -->
+                <!-- 写死 840dp 而不是 match_parent+maxWidth:**LinearLayout 不认 maxWidth**
+                     (实测照样拉满 1920,光标跑到左边一米外,车上够不着) -->
+                <EditText android:id="@+id/start_search_bar"
+                    android:tag="fg:ink;fill:tile2;stroke:line"
+                    android:layout_width="840dp"
+                    android:layout_height="56dp"
+                    android:background="@drawable/pill_line"
+                    android:paddingHorizontal="24dp"
+                    android:textColor="@color/ink"
+                    android:textColorHint="@color/muted"
+                    android:textSize="16sp"
+                    android:hint="输入网址,或用百度搜索"
+                    android:maxLines="1"
+                    android:imeOptions="actionGo"
+                    android:inputType="textUri"
+                    android:selectAllOnFocus="true" />
+
+                <!-- 标题和网格在没有收藏时整个收起(见 renderStartBookmarks) ——
+                     空标题底下吊一个空网格,占着半屏却什么也没有,是这页最难看的地方。 -->
+                <TextView android:id="@+id/start_grid_title"
+                    android:tag="fg:muted"
+                    android:layout_width="840dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="36dp"
+                    android:text="常用网址"
+                    android:textColor="@color/muted"
+                    android:textSize="14sp" />
+
+                <GridView android:id="@+id/start_bookmark_grid"
+                    android:layout_width="840dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:numColumns="6"
+                    android:verticalSpacing="8dp"
+                    android:horizontalSpacing="8dp"
+                    android:scrollbars="none"
+                    android:clipToPadding="false"
+                    android:gravity="top" />
+
+                <TextView android:id="@+id/start_empty"
+                    android:tag="fg:faint"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="28dp"
+                    android:text="还没有收藏,浏览网页时点右下角的星标可以添加"
+                    android:textColor="@color/faint"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <!-- 下载条:平时收起,下载一开始才冒出来(见 BrowserActivity.showDownload)。
+             下载**必须有个看得见的去处** —— 原来只弹一条 toast,而 Android 12 起 toast
+             一律压在屏幕底部、正好被常驻 Dock 盖住,等于没有任何反馈:点了下载,跳过来
+             是一张空白起始页,人只会以为没下上(2026-09-12 用户当场撞到)。
+             摆在标签条上沿,和底部操作条一起沉在手边。 -->
+        <LinearLayout android:id="@+id/download_bar"
+            android:tag="fill:tile2;stroke:line"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:visibility="gone"
+            android:background="@drawable/popup_bg"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="6dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="8dp"
+            android:paddingVertical="8dp">
+
+            <TextView android:id="@+id/download_text"
+                android:tag="fg:ink"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:maxLines="1"
+                android:ellipsize="middle"
+                android:textColor="@color/ink"
+                android:textSize="14sp" />
+
+            <TextView android:id="@+id/download_action"
+                android:tag="fg:onAccent;fill:accent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/pill_accent"
+                android:paddingHorizontal="18dp"
+                android:paddingVertical="8dp"
+                android:text="安装"
+                android:textColor="@color/on_accent"
+                android:textSize="14sp"
+                android:visibility="gone"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView android:id="@+id/download_close"
+                android:tag="fg:muted"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:gravity="center"
+                android:text="✕"
+                android:textColor="@color/muted"
+                android:textSize="16sp"
+                android:clickable="true"
+                android:focusable="true" />
+        </LinearLayout>
+
+        <!-- 底栏:按钮 + 标签**合成一条**。
+             原来是两行(标签条一行、六个按钮一行),在 1080 高的屏上连着底部 Dock 的占位
+             一共吃掉 370px —— 网页只剩上面三分之二,底下一整片空地(2026-09-12 实测)。
+             并成一行省掉整整一行,网页区直接多出 60 多 px。
+
+             按钮也不再"等宽铺满":六个按钮平分 1920,每两个之间隔着 380px,看着根本
+             不像一组东西。改成左边成组、各 56dp,标签条占右边剩下的地方。 -->
+        <View
+            android:tag="bg:line"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/line" />
+
+        <LinearLayout android:id="@+id/bottom_bar"
+            android:tag="bg:tile2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@color/tile2"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="6dp">
+
+            <ImageView android:id="@+id/btn_back"
+                android:tag="tint:muted"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:padding="14dp"
+                android:src="@drawable/ic_back"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="后退" />
+
+            <ImageView android:id="@+id/btn_forward"
+                android:tag="tint:muted"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:padding="14dp"
+                android:scaleX="-1"
+                android:src="@drawable/ic_back"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="前进" />
+
+            <ImageView android:id="@+id/btn_refresh"
+                android:tag="tint:muted"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:padding="14dp"
+                android:src="@drawable/ic_refresh"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="刷新" />
+
+            <ImageView android:id="@+id/btn_home"
+                android:tag="tint:muted"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:padding="15dp"
+                android:src="@drawable/ic_home"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="起始页" />
+
+            <!-- 导航三键和收藏两键之间留一道气口,不然六个图标连成一串分不出功能 -->
+            <View
+                android:tag="bg:line"
+                android:layout_width="1dp"
+                android:layout_height="28dp"
+                android:layout_marginHorizontal="8dp"
+                android:background="@color/line" />
+
+            <ImageView android:id="@+id/btn_star"
+                android:tag="tint:muted"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:padding="16dp"
+                android:src="@drawable/ic_star"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="收藏此页" />
+
+
+            <!-- 下载:**必须有个常驻入口**。下载条是临时的,一关(或下一次下载顶掉)
+                 那个包就再也找不着了 —— 在线更新正好卡在这儿:包下好了,想装的时候
+                 没有任何地方能把它翻出来(2026-09-12 用户当场问"没看到下载图标啊")。 -->
+            <ImageView android:id="@+id/btn_downloads"
+                android:tag="tint:muted"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:padding="15dp"
+                android:src="@drawable/ic_download"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="下载内容" />
+
+            <!-- 标签条:占右边剩下的地方,多了就横向滚。**放在按钮右边**而不是单独一行 -->
+            <HorizontalScrollView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="12dp"
+                android:scrollbars="none">
+
+                <LinearLayout android:id="@+id/tab_container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+
+            <!-- 「+」压在最右:标签开多了横向滚动时,新建入口还在原地不会被滚走 -->
+            <ImageView android:id="@+id/btn_new_tab"
+                android:tag="tint:muted"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginStart="8dp"
+                android:padding="15dp"
+                android:src="@drawable/ic_plus"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="新建标签页" />
+        </LinearLayout>
+
+        <!-- 给 Dock 让位的那一块,**高度运行时算**(见 DockHost.overlapInto,在 onResume 里写)。
+             这里写 0 是初值:这一页没走沉浸式,系统导航栏已经把窗口缩到它上沿了,Dock 盖的
+             正是导航栏那条 —— 真正压进窗口的只有 Dock 比导航栏高出来的那点(实测 12px)。
+             原来按 dock_space 硬让 56dp(84px),于是底栏和 Dock 之间白白夹着 72px 空白。
+             颜色跟底栏一致:让位块要是露出页面底色,就成了一条异色带。 -->
+        <View android:id="@+id/dock_space"
+            android:tag="bg:tile2"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:background="@color/tile2" />
+    </LinearLayout>
+
+    <!-- 下载面板:结构同常用网址那张,列最近下好的东西。apk 点一下就调安装器。 -->
+    <LinearLayout android:id="@+id/download_panel"
+        android:tag="fill:tile2;stroke:line"
+        android:layout_width="420dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginBottom="88dp"
+        android:layout_marginEnd="16dp"
+        android:orientation="vertical"
+        android:background="@drawable/popup_bg"
+        android:elevation="12dp"
+        android:paddingVertical="8dp"
+        android:visibility="gone">
+
+        <TextView
+            android:tag="fg:ink"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp"
+            android:text="下载内容"
+            android:textColor="@color/ink"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxHeight="360dp">
+
+            <LinearLayout android:id="@+id/download_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </ScrollView>
+
+        <TextView android:id="@+id/download_empty"
+            android:tag="fg:faint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="14dp"
+            android:text="还没有下载过东西"
+            android:textColor="@color/faint"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+</FrameLayout>

@@ -1,0 +1,20 @@
+{
+  "id": "normal",
+  "name": "浅色",
+  "_doc": "只当浅色配色来源用(外观 › 配色),能力以 full.json 为准。字段同 full.json。",
+  "wallpaper": "黑夜猫.mp4",
+  "colors": {
+    "bg": "#F1F3F5",
+    "surface": "#FFFFFF",
+    "tile": "#F1F3F5",
+    "tile2": "#E5E8EB",
+    "line": "#33182431",
+    "ink": "#FF182431",
+    "muted": "#99182431",
+    "faint": "#66182431",
+    "accent": "#006CDE",
+    "accent_soft": "#BCD5F0",
+    "on_accent": "#FFFFFF",
+    "glyph": "#99182431"
+  }
+}

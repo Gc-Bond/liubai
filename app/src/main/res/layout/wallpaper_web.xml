@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 网页壁纸那块 WebView。**单独一个文件是为了让它能挂在 ViewStub 后面** ——
+     写在 activity_home.xml 里就会跟着 setContentView 一起 inflate,把 Chromium
+     一并拉起来(真车实测 244ms),而选网页壁纸的是少数。见 activity_home.xml 里那段注释。
+
+     默认有白底,得显式打成透明,否则壁纸没加载完会白闪一下。
+     visibility 保持 gone:inflate 出来只是就位,铺不铺由 WallpaperHost 决定。 -->
+<WebView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/wallpaper_web"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:visibility="gone" />

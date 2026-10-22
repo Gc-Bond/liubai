@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- thermometer-line — MingCute Icon (Apache-2.0) https://github.com/mingcute-design/mingcute-icons
+     2026-08-14 整套换掉自绘/描摹的老图标。单色,运行时靠 tint 上色。
+     **别手改这个文件**,要换图标就换上面那个来源名,重新转一次。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M14 17a2 2 0 1 1-4 0z" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M14 5a2 2 0 1 0-4 0v7.958c0 .357-.197.68-.477.9a4 4 0 1 0 4.954 0c-.28-.22-.477-.543-.477-.9z" />
+</vector>

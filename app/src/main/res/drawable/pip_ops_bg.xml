@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 画中画卡片操作条的底。
+     只有下面两角圆:它紧贴卡片顶边,上边跟卡的边缘齐平,是"从边上挂下来"的一小条。
+     四角全圆那版试过 —— 那是浮在画面中间的独立控件的样子,和贴边对不上。
+     圆角取高度的一半(20/2),下沿正好是个半圆。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/tile2" />
+    <stroke android:width="1dp" android:color="@color/line" />
+    <corners android:bottomLeftRadius="10dp" android:bottomRightRadius="10dp" />
+</shape>

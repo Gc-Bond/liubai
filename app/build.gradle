@@ -1,0 +1,111 @@
+plugins {
+    id 'com.android.application'
+}
+
+// ---------- 正式签名(可选) ----------
+// keystore.properties(不入 git)给出 storeFile / storePassword / keyAlias / keyPassword,
+// 格式见 keystore.properties.example。文件不在就回落 debug 签名,自己编来装车够用。
+def keystoreProps = new Properties()
+def keystoreFile = rootProject.file('keystore.properties')
+if (keystoreFile.exists()) keystoreFile.withInputStream { keystoreProps.load(it) }
+
+// ---------- versionCode = git 提交数 ----------
+// 单调递增、跟代码状态一一对应,不用记着手动加。车友报一个 versionCode 就能
+// `git log` 定位到具体是哪次提交出的包 —— 这是发包在外最需要的东西。
+// 取不到(没装 git / 不是仓库)回退 1:那种环境下出的包本来也不该对外发。
+def gitCount = { ->
+    try {
+        def p = ['git', 'rev-list', '--count', 'HEAD'].execute(null, rootDir)
+        p.waitFor()
+        return p.exitValue() == 0 ? p.text.trim().toInteger() : 1
+    } catch (Exception ignored) {
+        return 1
+    }
+}()
+
+android {
+    namespace 'com.liubai.blank'
+    compileSdk 36
+    // 游戏中心的 JNI 桥要编原生代码(见 src/main/cpp)。**没装 NDK 就编不过**,
+    // 见 README「编译」。
+    ndkVersion '28.2.13676358'
+
+    defaultConfig {
+        applicationId 'com.liubai.blank'
+        // 全量 lint 扫过,超 minSdk 的调用只有 PipHost.setLaunchDisplayId(26)。
+        minSdk 28        // = Android 9;护卫舰07 实测为 API 29
+        targetSdk 29     // 贴近运行环境(DiLink4.0 = Android 10)
+        versionCode gitCount
+        versionName '1.0'   // 正式版(1.0-beta 的 -beta 已去)
+        // 车机和 AVD 都是 arm64,别的架构编出来也没人用,还让 apk 白胖一圈
+        ndk { abiFilters 'arm64-v8a' }
+        // 检查更新查的 GitHub 仓库(owner/repo),见 AppUpdater。
+        buildConfigField 'String', 'UPDATE_REPO', '"Gc-Bond/liubai"'
+    }
+
+    signingConfigs {
+        if (keystoreFile.exists()) {
+            release {
+                storeFile rootProject.file(keystoreProps.getProperty('storeFile'))
+                storePassword keystoreProps.getProperty('storePassword')
+                keyAlias keystoreProps.getProperty('keyAlias')
+                keyPassword keystoreProps.getProperty('keyPassword')
+            }
+        }
+    }
+
+    buildFeatures { buildConfig true }
+
+    externalNativeBuild {
+        cmake { path 'src/main/cpp/CMakeLists.txt'; version '3.22.1' }
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix '.debug'
+            versionNameSuffix '-debug'
+        }
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // 有 keystore.properties 就用正式签名,没有回落 debug 签名(自用装车够了)。
+            // 不签名的话 assembleRelease 出的是 unsigned 包,adb install 会报
+            // INSTALL_PARSE_FAILED_NO_CERTIFICATES。
+            signingConfig keystoreFile.exists() ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        // ExpiredTargetSdkVersion 是 Google Play 的上架门槛(要求 target >= 33),
+        // 本 app 不上架、只装车机,targetSdk 29 是刻意贴合 DiLink4.0(Android 10)的选择。
+        // 这条在 release 构建的 lintVitalRelease 里是 error,会直接卡住打包。
+        disable 'ExpiredTargetSdkVersion'
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.viewpager2:viewpager2:1.1.0'   // 上下滑切换桌面(垂直翻页容器)
+    implementation 'androidx.dynamicanimation:dynamicanimation:1.0.0'   // 弹簧物理动画(Dock/气泡/面板的丝滑手感)
+    // 交互壁纸(网页)靠它把壁纸目录挂成一个假的 https 域,而不是直接 file://。
+    // 见 HomeActivity.showWebWallpaper:file:// 下每个文件各算一个源,相对路径引的
+    // js/贴图会被同源策略拦掉,要放行就只能整个 file:// 一起放行 —— 那等于让壁纸的
+    // 脚本能读设备上任何本 app 读得到的文件。挂成 https 之后同源策略自己就对了。
+    implementation 'androidx.webkit:webkit:1.10.0'
+
+    // 游戏中心的玩家二维码。手机扫一下就当手柄连上来 —— 在车里对着中控屏
+    // 手输 192.168.x.x:8899 是不可能的事。只用它的编码器(core),
+    // 不引 zxing-android-embedded(那个带扫码 Activity 和相机权限,我们只生成不扫)
+    implementation 'com.google.zxing:core:3.5.3'
+
+    // 提权:Shizuku(ADB shell 级权限)。第一阶段用官方 API 验证能力,
+    // 后续换成内置一键授权时,只替换 privileged 包的实现,上层接口不动。
+    implementation 'dev.rikka.shizuku:api:13.1.5'
+    implementation 'dev.rikka.shizuku:provider:13.1.5'
+}

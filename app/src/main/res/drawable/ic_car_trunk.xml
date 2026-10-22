@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 来源: default_quick_panels_back_door_w_icon.svg (BYD 原厂, 见 tools/icon_map.json)。别手改，改映射表重跑 tools/svg2vd.py -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <group
+        android:translateX="-12.327"
+        android:translateY="0.427324">
+        <group
+            android:scaleX="0.438442"
+            android:scaleY="0.438442">
+            <path
+                android:pathData="M46.84,36.98m-7.68,0a7.68,7.68 0,1 1,15.37 0a7.68,7.68 0,1 1,-15.37 0"
+                android:fillColor="#FFFFFFFF"
+                android:fillType="evenOdd"
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="3.0"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round" />
+            <path
+                android:pathData="m31.44,35.76h7.33m15.97,0h7.43c0,0 3.01,0.24 3.01,-1.74v-6.27c0,0 -0.86,-1.74 -1.16,-2.37 -0.3,-0.63 0.07,-7.04 0.07,-7.04 0,0 0.07,-0.82 -1.85,-2.52 -1.93,-1.7 -7.37,-6.78 -8.71,-7.11 -1.33,-0.33 -9.78,-0.59 -9.78,-0.59l-12.28,0.05"
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="3.0"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="miter" />
+            <path
+                android:pathData="m75.17,29.79c0,0 3.78,-12.17 -0.78,-16.73"
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="2.0"
+                android:strokeLineCap="butt"
+                android:strokeLineJoin="miter" />
+            <path
+                android:pathData="m71.43,16.24 l2.59,-4.49 5.47,1.47"
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="2.0"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round" />
+            <path
+                android:pathData="m71.97,26.32 l2.59,4.49 5.47,-1.47"
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="2.0"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round" />
+        </group>
+    </group>
+</vector>

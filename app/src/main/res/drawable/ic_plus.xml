@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 来源: default_desktop_card_fast_app_add_w_icon.svg (BYD 原厂, 见 tools/icon_map.json)。别手改，改映射表重跑 tools/svg2vd.py -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <group
+        android:translateX="-2.59586"
+        android:translateY="-2.59586">
+        <group
+            android:scaleX="0.551724"
+            android:scaleY="0.551724">
+            <path
+                android:pathData="M26.458,9.833V43.084"
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="3.0"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="miter" />
+            <path
+                android:pathData="M43.084,26.458H9.833"
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="3.0"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="miter" />
+        </group>
+    </group>
+</vector>

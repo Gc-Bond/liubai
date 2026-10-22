@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 来源: nav_common_left_arrow_w_icon.svg (BYD 原厂, 见 tools/icon_map.json)。别手改，改映射表重跑 tools/svg2vd.py -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <group
+        android:translateX="-0.433199"
+        android:translateY="-0.168638">
+        <group
+            android:scaleX="0.232071"
+            android:scaleY="0.232071"
+            android:rotation="-90"
+            android:pivotX="53.575"
+            android:pivotY="52.435">
+            <path
+                android:pathData="m66.8,24.41 l-26.45,27.56 26.03,28.49"
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="6.0"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round" />
+        </group>
+    </group>
+</vector>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 来源: nav_common_cycle_mode_inner_w_icon.svg (BYD 原厂, 见 tools/icon_map.json)。别手改，改映射表重跑 tools/svg2vd.py -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <group
+        android:translateX="0"
+        android:translateY="0.394595">
+        <group
+            android:scaleX="0.226779"
+            android:scaleY="0.226779">
+            <path
+                android:pathData="m99.53,63.44c0,0 3.57,-0.68 3.74,-4.85 0.17,-4.17 0.26,-10.63 0.17,-11.23 -0.09,-0.6 -3.15,-5.53 -11.91,-9.87C82.77,33.16 73.93,27.8 70.44,26.95 66.95,26.1 55.81,25.76 53.26,26.7 50.71,27.63 43.14,30.78 39.82,32.91c-3.32,2.13 -6.38,6.89 -13.1,8.16 -6.72,1.28 -15.41,0.83 -19.48,4.08 -3.84,3.07 -4.84,6.39 -4.76,8.93 0.09,2.98 0.68,6.97 4.25,8.93 3.57,1.96 10.24,0.26 10.24,0.26 -0.09,1.12 -0.5,2.62 -0.5,4.22 0,4.83 3.73,8.72 8.36,8.72 4.63,0 8.36,-3.89 8.36,-8.72 0,-1.6 -0.41,-3.1 -0.7,-4.39l43.47,0c-0.29,1.29 -0.7,2.79 -0.7,4.39 0,4.83 3.73,8.72 8.36,8.72 4.63,0 8.36,-3.89 8.36,-8.72 0,-1.6 -0.41,-3.1 -0.53,-4.22z"
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="5.0"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round" />
+            <path
+                android:pathData="M56.89,40.29H50.52c0,0 -4.09,0.48 -4.09,4.99 0,4.51 0,3.01 0,3.01 0,0 0.12,4.27 3.85,4.27 3.73,0 24.18,0 24.18,0l-6.56,-8"
+                android:strokeColor="#FFFFFFFF"
+                android:strokeWidth="5.0"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round" />
+        </group>
+    </group>
+</vector>

@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 主页:留白。平时整页什么都没有(只有壁纸),两张画中画卡都藏着。
+     点第二个 app 时才划出左右两张卡(见 HomeActivity.onLaunch),关掉又回到空白。
+
+     为什么不放图标网格:桌面上摆一排图标等于行车中的持续勾引,与「留白」相悖。
+     app 从底部 Dock 和「全部应用」进——Dock 在 pager 之外常驻,任何状态下都点得到。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:clipChildren="false">
+
+    <!-- 卡一:先在跑的那个 app 落这儿。宽度由 CardSizeStore 的档位驱动
+         (见 HomeActivity.applyCardScale),这里的 weight 只是没跑到代码前的初值。 -->
+    <FrameLayout android:id="@+id/pip1_card"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.50"
+        android:clipChildren="false"
+        android:visibility="gone">
+
+        <!-- 画面铺满整张卡,一个像素都不让给按钮。圆角由代码给它自己设 outline 来裁
+             (shape drawable 不提供 outline,XML 里的 clipToOutline 对它无效)。 -->
+        <TextureView android:id="@+id/pip1_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+
+        <!-- 占位层:拖动中和虚拟屏重建期间盖住画面,只显示 app 图标。
+             不盖的话,拖动时看到的是被横向拉扁的实时界面,松手重建完又"啪"地换成新画面。 -->
+        <FrameLayout android:id="@+id/pip1_ph"
+            android:tag="fill:deskTile;radius:radius_card"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/card_bg"
+            android:visibility="gone">
+            <ImageView android:id="@+id/pip1_ph_icon"
+                android:layout_width="76dp"
+                android:layout_height="76dp"
+                android:layout_gravity="center" />
+        </FrameLayout>
+
+        <!-- 卡片操作条:全屏 / 关闭,两个键直给,**常驻**。
+
+             这块地方换过五版,每版被否的理由都记下来,别再走回头路:
+             ① 卡角悬浮角标 —— 碰卡片才浮出、3 秒自动收走,每次操作都要先唤醒一次,
+                还经常点空;放哪个角都压着 app 自己那个角的东西。
+             ② 顶边把手 + 弹菜单(迪友的形态) —— 两个键的事要先点开菜单再选,反而更远。
+             ③ 30dp 高的胶囊压在画面里 —— 太大,盖住了音乐 app 那排 tab。
+             ④ 挪到画面外面单独占一行 —— 不遮挡了,但画中画能看的地方直接矮了 38dp,
+                **这是拿主功能换次要功能,不划算**。
+             ⑤ 就是现在这个:回到画面里、紧贴顶边,但**做到足够小**(20dp 高、总共 60dp 宽,
+                约等于两张卡任意一张的 3%),遮挡小到可以忽略,又不吃画面一寸空间。
+
+             为什么居中而不是靠某一边:两张卡并排时各自居中,谁的条对着谁,不会看错;
+             位置固定、永远在原地,闭着眼也摸得到。各家 app 顶部正中那一小段通常也是空的。 -->
+        <LinearLayout android:id="@+id/pip1_ops"
+            android:tag="fill:tile2;stroke:line"
+            android:layout_width="wrap_content"
+            android:layout_height="20dp"
+            android:layout_gravity="top|center_horizontal"
+            android:orientation="horizontal"
+            android:background="@drawable/pip_ops_bg"
+            android:visibility="gone">
+
+            <!-- 全屏排左边:它是从画中画出发最常走的一步,而关闭是破坏性的。别对调。 -->
+            <ImageView android:id="@+id/pip1_full"
+                android:tag="tint:ink"
+                android:layout_width="30dp"
+                android:layout_height="match_parent"
+                android:padding="5dp"
+                android:src="@drawable/ic_expand"
+                android:tint="@color/ink"
+                android:scaleType="fitCenter"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <!-- 分隔线不通到顶底:胶囊是圆角的,一条直线切到边会把它劈成两半,显得生硬。 -->
+            <View android:tag="bg:line"
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:background="@color/line" />
+
+            <ImageView android:id="@+id/pip1_close"
+                android:tag="tint:ink"
+                android:layout_width="30dp"
+                android:layout_height="match_parent"
+                android:padding="5dp"
+                android:src="@drawable/ic_remove"
+                android:tint="@color/ink"
+                android:scaleType="fitCenter"
+                android:clickable="true"
+                android:focusable="true" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- 拉伸握把:按住左右拖改两张卡的分配比例,松手吸附档位。
+         必须在卡片外面——画中画运行时卡内的 TextureView 会吞掉全部触摸转发给虚拟屏,
+         做在卡内收不到事件。空态时跟着卡一起藏起来。 -->
+    <com.liubai.blank.ui.ResizeHandle
+        android:id="@+id/np_resize"
+        android:layout_width="12dp"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <!-- 卡二:新点开的那个 app 落这儿。 -->
+    <FrameLayout android:id="@+id/pip2_card"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.50"
+        android:clipChildren="false"
+        android:visibility="gone">
+
+        <TextureView android:id="@+id/pip2_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+
+        <FrameLayout android:id="@+id/pip2_ph"
+            android:tag="fill:deskTile;radius:radius_card"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/card_bg"
+            android:visibility="gone">
+            <ImageView android:id="@+id/pip2_ph_icon"
+                android:layout_width="76dp"
+                android:layout_height="76dp"
+                android:layout_gravity="center" />
+        </FrameLayout>
+
+        <LinearLayout android:id="@+id/pip2_ops"
+            android:tag="fill:tile2;stroke:line"
+            android:layout_width="wrap_content"
+            android:layout_height="20dp"
+            android:layout_gravity="top|center_horizontal"
+            android:orientation="horizontal"
+            android:background="@drawable/pip_ops_bg"
+            android:visibility="gone">
+
+            <ImageView android:id="@+id/pip2_full"
+                android:tag="tint:ink"
+                android:layout_width="30dp"
+                android:layout_height="match_parent"
+                android:padding="5dp"
+                android:src="@drawable/ic_expand"
+                android:tint="@color/ink"
+                android:scaleType="fitCenter"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <View android:tag="bg:line"
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:background="@color/line" />
+
+            <ImageView android:id="@+id/pip2_close"
+                android:tag="tint:ink"
+                android:layout_width="30dp"
+                android:layout_height="match_parent"
+                android:padding="5dp"
+                android:src="@drawable/ic_remove"
+                android:tint="@color/ink"
+                android:scaleType="fitCenter"
+                android:clickable="true"
+                android:focusable="true" />
+        </LinearLayout>
+    </FrameLayout>
+</LinearLayout>

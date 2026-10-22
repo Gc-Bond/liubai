@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- engine-outline — Material Design Icons / Pictogrammers (Apache-2.0) https://github.com/Templarian/MaterialDesign
+     2026-08-14 整套换掉自绘/描摹的老图标。单色,运行时靠 tint 上色。
+     **别手改这个文件**,要换图标就换上面那个来源名,重新转一次。
+     MingCute 和 Material Symbols 都没有这个车身件。它在快捷车控卡片里,不上 Dock,
+     风格差一点影响有限。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M8 10h8v8h-5l-2-2H7v-5m0-7v2h3v2H7l-2 2v3H3v-3H1v8h2v-3h2v3h3l2 2h8v-4h2v3h3V9h-3v3h-2V8h-6V6h3V4z" />
+</vector>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 常驻顶栏的窗口内容。**整个顶栏只有这一份实例** —— 桌面上、别的 app 之上,
+     看到的都是它(见 StatusBarHost),和底部 Dock 是一对镜像。
+
+     **这里不写具体项**:放哪几项、在左边还是右边由车主编排(外观面板 › 顶栏页,
+     存在 StatusBarStore 里),运行时铺进下面那两个空容器(见 StatusBarView.rebuild)。
+     照 DiStyle 那套 —— 它的顶栏也是一条可自定义的列表(RecyclerView +
+     CustomStatusBarItemAdapter),不是写死的几个控件。
+
+     窗口高度由 StatusBarHost.params 决定,不看这里:取系统 status_bar_height
+     (真车 90px / 模拟器 36px),所以内容一律垂直居中、别写死高度。
+
+     **中间那段必须空着**:真车顶部正中是语音球的开孔(DisplayCutout
+     Rect(932,0-988,90),见 tools/car-avd.sh 的 cutout 说明),压上去的东西会被它啃掉一块。
+     左右两串加中间那条 weight=1 的空档,天然把开孔让出来。
+
+     顶栏**不接触摸**(窗口带 FLAG_NOT_TOUCHABLE,见 StatusBarHost.params),
+     所以这里所有控件都不设点击,也不要加 background 选中态 —— 点不动的按钮比没有更糟。
+     编排也因此只能在外观面板里做,不能在栏上直接拖。 -->
+<com.liubai.blank.ui.StatusBarView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/status_bar_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/status_bar"
+        android:tag="fill:surface"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp"
+        android:background="@drawable/status_bar_bg">
+
+        <!-- 项就铺在这里,一条有序列表。**中间那段空档现在是一个「占位·撑开」项**
+             (默认编排里就有),不再写死在布局里 —— 车主想把时间挪到右边、把图标挪到
+             中间,都是重排这条列表的事。真车语音球开孔靠同一个机制让开。 -->
+        <LinearLayout
+            android:id="@+id/status_items"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical" />
+    </LinearLayout>
+</com.liubai.blank.ui.StatusBarView>

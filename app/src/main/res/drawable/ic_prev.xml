@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- skip-previous-line — MingCute Icon (Apache-2.0) https://github.com/mingcute-design/mingcute-icons
+     2026-08-14 整套换掉自绘/描摹的老图标。单色,运行时靠 tint 上色。
+     **别手改这个文件**,要换图标就换上面那个来源名,重新转一次。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M5 6v12m13.772-6.004c0 2.967-.225 5.135-.333 6.013a.33.33 0 0 1-.46.265c-.808-.342-2.778-1.224-5.37-2.721c-2.593-1.496-4.342-2.762-5.042-3.29a.33.33 0 0 1 0-.531c.709-.534 2.481-1.816 5.04-3.294s4.555-2.371 5.372-2.718a.33.33 0 0 1 .46.266c.109.878.333 3.045.333 6.01" />
+</vector>

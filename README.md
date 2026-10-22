@@ -2,6 +2,9 @@
 
 比亚迪 DiLink 车机的第三方桌面。实测车型:护卫舰 07(DiLink 4.0,Android 10)。
 
+![桌面](docs/screenshots/desk1.jpg)
+![桌面:车控卡片与 Dock](docs/screenshots/desk2.jpg)
+
 > 本项目与比亚迪无关,不是官方产品。车控功能通过 ADB shell 级权限调用车机系统服务实现,
 > 请自行判断风险;行车中请勿操作屏幕。
 

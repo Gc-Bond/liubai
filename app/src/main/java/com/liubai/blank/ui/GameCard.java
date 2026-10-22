@@ -104,7 +104,7 @@ public class GameCard extends DeskCard {
      * 卡面。文字是固定的,这儿只剩跟着模式走的两处颜色。
      *
      * <p><b>图标不能用 accent</b>(2026-09-05 改):这一屏里 accent 是「开着」的意思 ——
-     * 车控卡开着才是 accent、关着是 glyph,HiCar 卡同理(on ? accent : muted)。
+     * 车控卡开着才是 accent、关着是 glyph(on ? accent : muted)。
      * 游戏中心是个入口,没有开关状态,涂成 accent 就被读成"已经打开了"。
      * 用 glyph(图标的常规色),和关着的车控卡一致 —— 它本来也不该比别人显眼。
      */

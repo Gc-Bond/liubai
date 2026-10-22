@@ -705,8 +705,8 @@ public final class DockHost implements DockView.Listener {
      * 点运行区的 app:**切回去**,不是重开。
      *
      * 走 launch intent 而不是 am start:同一个 task 已经在了,launch intent 会把它
-     * 整个搬到前台并保留栈内状态(用户上次停在哪一页还在哪一页)。这跟 HiCar 里
-     * "点一下地图就切回去"是同一种手感 —— 关键在于那个 task 从来没被杀过。
+     * 整个搬到前台并保留栈内状态(用户上次停在哪一页还在哪一页)。"点一下地图就切回去"
+     * 的手感就靠这个 —— 关键在于那个 task 从来没被杀过。
      */
     @Override public void onSwitchTo(AppRef app) {
         if (app == null) return;

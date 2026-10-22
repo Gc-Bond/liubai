@@ -183,7 +183,7 @@ public class HomeActivity extends AppCompatActivity
         musicSources = new MusicSourceStore(this);
         icons = new IconEngine(this);
         // 两个卡位是**有语义**的:卡一给地图、卡二给音乐(见 openApp 的路由)。
-        // 这跟 HiCar 一个思路 —— 画中画不是通用容器,是给少数常驻功能留的位置。
+        // 画中画不是通用容器,是给少数常驻功能留的位置。
         pip1 = PipCard.slot(this, "pip_slot1");
         pip2 = PipCard.slot(this, "pip_slot2");
         cardSize = new CardSizeStore(this);   // 须在 setupStage 前:绑卡时就要读档位
@@ -825,7 +825,7 @@ public class HomeActivity extends AppCompatActivity
      * 点 app 的唯一决策点,所有入口(Dock / 全部应用抽屉)都走这里。
      *
      * 画中画只有两个位置,而且是给"要一直看着"的东西准备的(地图/音乐,见 A2)。
-     * 位置满了就**全屏打开**,不再往桌面里塞 —— 这也是 HiCar 的做法:除了那两类,
+     * 位置满了就**全屏打开**,不再往桌面里塞 —— 除了那两类,
      * 其余 app 一律全屏,用完就走。全屏时 Dock 仍然浮在上面(见 DockHost),
      * 所以"回得来"这件事不依赖桌面本身可见。
      *
